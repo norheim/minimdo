@@ -1,6 +1,7 @@
 import sympy as sp
 import numpy as np
 from autograd import grad
+import openmdao.api as om
 
 def args_in_order(name_dict, names):
     return [name_dict[in_var] for in_var in names]
@@ -21,3 +22,77 @@ class Equation():
     def graddict(self, indict):
         args = np.array(args_in_order(indict, self.inputs_names))
         return self.jfx(args)
+
+class Expcomp(om.ExplicitComponent):
+    def initialize(self):
+        self.options.declare('equation')
+        
+    def setup(self):
+        equation = self.options['equation']
+        self.add_output(equation.output_name)
+        for name in equation.inputs_names:
+            self.add_input(name, val=1.) # add them in the order we lambdify
+        self.declare_partials(equation.output_name, equation.inputs_names)
+            
+    def compute(self, inputs, outputs):
+        equation = self.options['equation']
+        outputs[equation.output_name] = equation.evaldict(inputs)
+        #print(outputs[equation.output_name])
+
+    def compute_partials(self, inputs, partials, discrete_inputs=None):
+        equation = self.options['equation']
+        J = equation.graddict(inputs)
+        for idx, input_name in enumerate(equation.inputs_names):
+            partials[equation.output_name,input_name] = J[idx]
+
+
+def coupled_run(eqs, seq_order, solve_order, parent, counter, 
+    useresiduals=False):
+    counter+=1
+    group = parent.add_subsystem('group{}'.format(counter), 
+        om.Group(), promotes=['*'])
+    order = []
+    if solve_order:
+        order = solve_order
+        group.linear_solver = om.DirectSolver()
+        nlbgs = group.nonlinear_solver = om.NewtonSolver(solve_subsystems=False)
+        nlbgs.options['maxiter'] = 20
+        if seq_order:
+            counter = coupled_run(eqs, seq_order, (), group, counter, 
+                useresiduals)
+    else:
+        order = seq_order
+    for idx, eqnelt in enumerate(order):
+        eqn = eqnelt
+        left, right = eqs[eqn]
+        if useresiduals:
+                parent.add_subsystem("eq{}".format(eqn), Expcomp(
+                    equation=Equation('r{}'.format(eqn), right-left)), 
+                    promotes=['*'])
+                #root.add_constraint('r{}'.format(eqn), equals=0.)
+        else:
+            group.add_subsystem("eq{}".format(eqn), Expcomp(
+                equation=Equation(left, right)), promotes=['*'])
+    return counter
+
+def buildmdao_recursive(eqs, solve_order, root=None, parent=None, useresiduals=False): #root=model
+    if parent==None:
+        parent = root
+    for idx, eqnelt in enumerate(solve_order):
+        if isinstance(eqnelt, list):
+            group = parent.add_subsystem('group{}'.format(idx), om.Group(), promotes=['*'])
+            children_useres = False
+            if not children_useres:
+                #nlbgs = group.nonlinear_solver = om.NonlinearBlockGS()
+                group.linear_solver = om.DirectSolver()
+                nlbgs = group.nonlinear_solver = om.NewtonSolver(solve_subsystems=False)
+                nlbgs.options['maxiter'] = 20
+            buildmdao_recursive(eqs, eqnelt, root, group, useresiduals=children_useres)
+        else:
+            eqn = eqnelt
+            left, right = eqs[eqn]
+            if useresiduals:
+                parent.add_subsystem("eq{}".format(eqn), Expcomp(equation=Equation('r{}'.format(eqn), right-left)), promotes=['*'])
+                root.add_constraint('r{}'.format(eqn), equals=0.)
+            else:
+                parent.add_subsystem("eq{}".format(eqn), Expcomp(equation=Equation(left, right)), promotes=['*']);
