@@ -46,7 +46,7 @@ class Expcomp(om.ExplicitComponent):
             partials[equation.output_name,input_name] = J[idx]
 
 
-def coupled_run(eqs, seq_order, solve_order, parent, counter, 
+def coupled_run(eqs, seq_order, solve_order, parent, root, counter, 
     useresiduals=False):
     counter+=1
     group = parent.add_subsystem('group{}'.format(counter), 
@@ -58,41 +58,31 @@ def coupled_run(eqs, seq_order, solve_order, parent, counter,
         nlbgs = group.nonlinear_solver = om.NewtonSolver(solve_subsystems=False)
         nlbgs.options['maxiter'] = 20
         if seq_order:
-            counter = coupled_run(eqs, seq_order, (), group, counter, 
+            counter = coupled_run(eqs, seq_order, (), group, root, counter, 
                 useresiduals)
     else:
         order = seq_order
     for idx, eqnelt in enumerate(order):
-        eqn = eqnelt
-        left, right = eqs[eqn]
-        if useresiduals:
-                parent.add_subsystem("eq{}".format(eqn), Expcomp(
-                    equation=Equation('r{}'.format(eqn), right-left)), 
-                    promotes=['*'])
-                #root.add_constraint('r{}'.format(eqn), equals=0.)
-        else:
-            group.add_subsystem("eq{}".format(eqn), Expcomp(
-                equation=Equation(left, right)), promotes=['*'])
-    return counter
-
-def buildmdao_recursive(eqs, solve_order, root=None, parent=None, useresiduals=False): #root=model
-    if parent==None:
-        parent = root
-    for idx, eqnelt in enumerate(solve_order):
         if isinstance(eqnelt, list):
-            group = parent.add_subsystem('group{}'.format(idx), om.Group(), promotes=['*'])
-            children_useres = False
-            if not children_useres:
-                #nlbgs = group.nonlinear_solver = om.NonlinearBlockGS()
-                group.linear_solver = om.DirectSolver()
-                nlbgs = group.nonlinear_solver = om.NewtonSolver(solve_subsystems=False)
-                nlbgs.options['maxiter'] = 20
-            buildmdao_recursive(eqs, eqnelt, root, group, useresiduals=children_useres)
+            counter = coupled_run(eqs, eqnelt, (), group, root, counter)
+        elif isinstance(eqnelt, tuple):
+            if isinstance(eqnelt[0], list):
+                ordered = eqnelt[0]
+                unordered = eqnelt[1:]
+            else:
+                ordered = []
+                unordered = eqnelt
+            counter = coupled_run(eqs, ordered, unordered, group, root, counter)
         else:
             eqn = eqnelt
             left, right = eqs[eqn]
             if useresiduals:
-                parent.add_subsystem("eq{}".format(eqn), Expcomp(equation=Equation('r{}'.format(eqn), right-left)), promotes=['*'])
-                root.add_constraint('r{}'.format(eqn), equals=0.)
+                    parent.add_subsystem("eq{}".format(eqn), Expcomp(
+                        equation=Equation('r{}'.format(eqn), right-left)), 
+                        promotes=['*'])
+                    #root.add_constraint('r{}'.format(eqn), equals=0.)
             else:
-                parent.add_subsystem("eq{}".format(eqn), Expcomp(equation=Equation(left, right)), promotes=['*']);
+                group.add_subsystem("eq{}".format(eqn), Expcomp(
+                    equation=Equation(left, right)), promotes=['*'])
+    return counter
+
