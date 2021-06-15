@@ -3,6 +3,7 @@ import sympy as sp
 from sympy import S
 import networkx as nx
 from compute import args_in_order, Equation, coupled_run
+from compute_utils import get_outputs
 from inputresolver import reassign, getdofs, set_ins, mdf_order
 import numpy as np
 import openmdao.api as om
@@ -35,6 +36,15 @@ def test_digraph_fromoutput():
     order = [C.nodes[n]['members'] for n in nx.topological_sort(C)]
     assert order == [{x3}, {x2, x1}, {x4}]
 
+def test_mathlib_equation():
+    x, y = sp.symbols("x y")
+    eq = Equation(x, y**0.5)
+    inputvals = {'y':1.}
+    run = eq.evaldict(inputvals)
+    gradrun = eq.graddict(inputvals)
+    assert run == 1
+    assert gradrun[0] == 0.5
+
 def test_compute_equation():
     _, eqs, _, _ = generate_test_eqs()
     left, right = eqs[1]
@@ -61,9 +71,10 @@ def test_getdofs():
     ins = getdofs(eqs)
     assert {x1,x2,x5}==ins
 
-def test_mdf_order():
+def test_mdf_order_determined():
     (x1,x2,x3,x4), eqs, eqvars, default_output = generate_test_eqs()
     ins = getdofs(eqs)
+    # make the system determined
     for idx, elt in enumerate(ins):
         eqname = 'in{}'.format(idx)
         eqs[eqname] = (elt, S(0.99))
@@ -72,6 +83,11 @@ def test_mdf_order():
     order = mdf_order(eqvars, default_output)
     #assert order = ['in0', (2,3,1)]
     assert True
+
+def test_mdf_order_underdetermined():
+    (x1,x2,x3,x4), eqs, eqvars, default_output = generate_test_eqs()
+    order = mdf_order(eqvars, default_output)
+    assert set(order[0]) == {1,2,3}
 
 def test_sequential_run():
     x1, x2, x3 = sp.symbols("x_1 x_2 x_3")
@@ -145,3 +161,25 @@ def test_full_pipeline():
     assert prob.model.get_val('x_1')[0]==pytest.approx(0.99331104)
     assert prob.model.get_val('x_2')[0]==pytest.approx(1.65551839)
     assert prob.model.get_val('x_3')[0]==pytest.approx(0.66889632)
+
+def test_get_outputs_determined():
+    x1, x2 = sp.symbols("x_1 x_2")
+    eqs = {
+        1: (x1, S(1)),
+        2: (x2, 2*x1)
+    }
+    default_output = {key: left for key,(left,right) in eqs.items()}
+    eqvars = {key: right.free_symbols | left.free_symbols for key,(left,right) 
+        in eqs.items()}
+    order = mdf_order(eqvars, default_output)
+    prob = om.Problem()
+    model = prob.model
+    counter = coupled_run(eqs, order, (), model, model, 0)
+    prob.setup()
+    prob.run_model()
+    out = get_outputs(default_output, model)
+    assert out[x1] == 1
+    assert out[x2] == 2
+
+def test_get_outputs_undetermined():
+    assert True

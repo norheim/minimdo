@@ -1,15 +1,23 @@
 import sympy as sp
 import numpy as np
 from autograd import grad
+import autograd.numpy as anp
 import openmdao.api as om
 
 def args_in_order(name_dict, names):
     return [name_dict[in_var] for in_var in names]
 
+# The following class emulates being a dictionary for sympys lambdify to work
+# with autograd
+math_functions = ['cos', 'sin', 'tan', 'arccos', 'arcsin', 'arctan', 'sqrt', 
+'exp', 'log', 'log2', 'log10']
+
+anp_math = {elt: getattr(anp, elt) for elt in math_functions}
+
 class Equation():
     def __init__(self, left, right):
         inputs = list(right.free_symbols)
-        self.fx = sp.lambdify(inputs, right, 'numpy')
+        self.fx = sp.lambdify(inputs, right, anp_math)
         wrapped_fx = self.fx if len(inputs) == 1 else (
                 lambda x: self.fx(*x)) #adapt to numpy
         self.jfx = grad(wrapped_fx)
@@ -86,3 +94,9 @@ def coupled_run(eqs, seq_order, solve_order, parent, root, counter,
                     equation=Equation(left, right)), promotes=['*'])
     return counter
 
+def buildidpvars(inputs, model):
+    comp = om.IndepVarComp()
+    np.random.seed(5)
+    for elt in inputs:
+        comp.add_output(str(elt), np.random.rand())
+    model.add_subsystem('inp', comp, promotes=['*'])
