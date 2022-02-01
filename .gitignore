@@ -1,2 +1,7 @@
 .vscode
+.ipynb_checkpoints
+.clj-kondo
+.lsp
 n2.html
+figures
+*.lp
