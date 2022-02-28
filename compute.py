@@ -11,11 +11,11 @@ from itertools import count
 from anytree import Node, NodeMixin, PreOrderIter
 from enum import Enum
 ureg = UnitRegistry()
-NodeTypes = Enum('NodeTypes', 'INTER END SOLVER')
+NodeTypes = Enum('NodeTypes', 'INTER END SOLVER OPT')
 INTER = NodeTypes.INTER
 END = NodeTypes.END
 SOLVER = NodeTypes.SOLVER # to be used for inter but when a solver
-
+OPT = NodeTypes.OPT
 
 def args_in_order(name_dict, names):
     return [name_dict[in_var] for in_var in names if in_var in name_dict]
@@ -66,11 +66,11 @@ class Function():
         return str(self.name)
 
 class SolverNode(NodeMixin):
-    def __init__(self, name, parent=None, refonly=False, children=None):
+    def __init__(self, name, parent=None, refonly=False, children=None, node_type=SOLVER):
         self.ref = parent.ref
         self.name = name
         self.parent = None if refonly else parent
-        self.node_type = SOLVER
+        self.node_type = node_type
         if children:  # set children only if given
              self.children = children
 
@@ -78,7 +78,7 @@ class SolverNode(NodeMixin):
         # hacky solution with enumerate
         for idx, elt in enumerate(self.children):
             if elt.node_type == END:
-                self.m.outset[elt] = solveforvars[idx]
+                self.ref.outset[elt] = solveforvars[idx]
 
     def __repr__(self):
         return str(self.name)
@@ -216,7 +216,7 @@ class Model():
         return eqs, eqv, dout, dins_clean
 
 
-def adda(branch_node, left, right, pretty_name=True, *args, **kwargs):
+def adda(branch_node, left, right, pretty_name=True, returnfx=False, returnnode=False, *args, **kwargs):
     if isinstance(left, str):
         out, eq = eqvar(left, right, *args, **kwargs)
         outsetvar = out
@@ -231,11 +231,18 @@ def adda(branch_node, left, right, pretty_name=True, *args, **kwargs):
     m.outset[function] = outsetvar
     m.eqs[function] = eq
     m.tree.append(tree_node)
-    return out
+    if returnfx and returnnode:
+        return out, function, tree_node
+    elif returnfx:
+        return out, function
+    elif returnnode:
+        return out, tree_node
+    else:
+        return out
 
 def addf(branch_node, eq, name=None):
     m = branch_node.ref
-    fname = name if name else 'r_{}'.format(len(m.eqs))
+    fname = name if name else 'r_{{{}}}'.format(len(m.eqs))
     function = Function(fname, original_node_type=END)
     tree_node = RefNode(fname, ref=function, node_type=END, parent=branch_node)
     m.eqs[function] = ((None, eq))
@@ -248,12 +255,12 @@ def geteqs(root_node, outvars):
         node.node_type==INTER]
     return [f for f in tree_nodes if m.outset[f.ref] in outvars]
 
-def addsolver(branch_node, sequence=None, outset=None, name=None):
+def addsolver(branch_node, sequence=None, outset=None, name=None, node_type=SOLVER):
     sequence = sequence if sequence else []
     outset = outset if outset else {}
     name = name if name else '.'
     m = branch_node.ref
-    solver_node = SolverNode(name, parent=branch_node)
+    solver_node = SolverNode(name, parent=branch_node, node_type=node_type)
     for node in sequence:
         node.parent = solver_node
     for fnode_end,solvevar in outset:

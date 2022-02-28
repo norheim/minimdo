@@ -11,8 +11,11 @@ def sortf(e):
 def seq_by_type(sequence):
     return  [node for elt in sequence for idx, node in sorted(list(enumerate(elt.children)), key=sortf) if node.node_type in [INTER, END]]
 
-def default_sequence(root):
-    return seq_by_type([elt for elt in PreOrderIter(root) if elt.node_type not in [INTER, END]])
+def default_sequence(root, enforce_separation=False):
+    if enforce_separation:
+        return seq_by_type([elt for elt in PreOrderIter(root) if elt.node_type not in [INTER, END]])
+    else:
+        return [elt for elt in PreOrderIter(root) if elt.node_type in [INTER, END]]
 
 def solvers_bottom_up(m, from_root=False):
     out = [node for node in LevelOrderIter(m) if 
@@ -46,13 +49,30 @@ def sort_scc(G, eqsn):
             order.append(filtereqs)
     return order
 
+def duplicate_nodes(branch_node, root_name='/', copy_solvers=True):
+    model = branch_node.ref
+    m_new = RefNode(root_name, ref=model)
+    new_nodes = {elt: RefNode(elt.name, ref=elt.ref, node_type=elt.node_type) if elt.node_type !=SOLVER else SolverNode(elt.name, m_new, refonly=True) for elt in PreOrderIter(branch_node) 
+    if elt != branch_node and (elt.node_type != SOLVER or copy_solvers)}
+    # the second condition filters out solver nodes when copy_solvers=False
+    new_nodes[branch_node] = m_new
+    return new_nodes, m_new
+
+def all_residuals(branch_node, from_root=True):
+    new_nodes, m_new = duplicate_nodes(branch_node, copy_solvers=False)
+    add_to_solver = []
+    for node in new_nodes.values():
+        if node!=m_new:
+            node.parent = m_new
+            node.node_type = END
+            add_to_solver.append(node)
+    addsolver(m_new, add_to_solver)
+    return m_new
+    
+
 def make_acyclic(branch_node, graphs, method='scc', mdf=True, from_root=True):
     # Copy tree nodes
-    model = branch_node.ref
-    m_new = RefNode(name='/', ref=model)
-    new_nodes = {elt: RefNode(elt.name, ref=elt.ref, node_type=elt.node_type) if elt.node_type !=SOLVER else SolverNode(elt.name, m_new, refonly=True) for elt in PreOrderIter(branch_node) if elt != branch_node}
-    new_nodes[branch_node] = m_new
-
+    new_nodes, m_new = duplicate_nodes(branch_node)
     # Handle solver nodes in reverse order
     merge_order = solvers_bottom_up(branch_node, from_root)
     for solver_branch in merge_order:
@@ -71,7 +91,8 @@ def make_acyclic(branch_node, graphs, method='scc', mdf=True, from_root=True):
                 if mdf:
                     order += [addsolver(new_nodes[solver_branch], stcc)]
                 else:
-                    order += stcc
+                    for node in stcc:
+                        node.parent = new_nodes[solver_branch]
     return m_new
 
 def generate_execution(ex):

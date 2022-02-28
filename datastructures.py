@@ -12,10 +12,10 @@ def notation_from_tree(tree, solvefor):
     for elt in sequence:
         if elt.is_leaf:
             if elt.node_type == END:
-                endcomps.append(elt.name)
+                endcomps.append(elt.ref)
                 solvefr.append(solvefor[elt.ref])
             else:
-                nt.append((solvefor[elt.ref], elt.name))
+                nt.append((solvefor[elt.ref], elt.ref))
         else:
             nt.append(notation_from_tree(elt, solvefor))
     nt.extend(endcomps)

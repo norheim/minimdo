@@ -103,53 +103,89 @@ def getpatchwindow(lst):
     size = max(lst)-ulcorner+1
     return ulcorner,size
 
-def tree_incidence(root, incstr, solvefor, sequence, permutation=None, figsize=None):
+def getpatchwindow_end(lst):
+    equivalent_lst, matched_ends = zip(*lst)
+    ulcorner,size = getpatchwindow(equivalent_lst)
+    return ulcorner,size-sum(matched_ends)
+
+def get_patches(root, sequence, solvefor):
     allpatches = []
     for node in PreOrderIter(root):
         if not node.is_leaf: #to speed things up a bit
-            ls = [(idx,elt) for idx,elt in enumerate(sequence) if elt in PreOrderIter(node)]
-            inter = [idx for idx, elt in ls if 
-                    (elt.node_type==INTER and elt in node.children) or 
-                    ((elt not in node.children) and node in elt.ancestors)]
-            end = [idx for idx,elt in ls if elt.node_type==END and elt in node.children]
-            patchparam = getpatchwindow([idx for idx,elt in ls])
-            patchparam_inter = [getpatchwindow(inter)] if inter else []
-            patchparam_end = [getpatchwindow(end)] if end else []
+            ls, inter, end = [], [], []
+            for idx,elt in enumerate(sequence):
+                if elt in PreOrderIter(node):
+                    if ((elt.node_type==INTER and elt in node.children) or 
+                    ((elt not in node.children) and node in elt.ancestors)):
+                        item_to_add = (idx, False)
+                        inter.append(item_to_add)
+                    elif (elt.node_type==END and elt in node.children):
+                        item_to_add = (idx, elt.ref not in solvefor)
+                        end.append(item_to_add)
+                    ls.append(item_to_add)
+            patchparam = getpatchwindow_end(ls)
+            patchparam_inter = [getpatchwindow_end(inter)] if inter else []
+            patchparam_end = [getpatchwindow_end(end)] if end else []
             allpatches.append(patchparam)
             allpatches += patchparam_inter
             allpatches += patchparam_end
-    sequence_based_permutation = [solvefor[eqname.ref] for eqname in sequence]  # option that shows outputs
+    return allpatches
+
+def plot_incidence_matrix(A, column_labels, row_labels, pad=None, **kwargs):
+    fontsize = kwargs.get('fontsize', 16)
+    fig, ax = plt.subplots()
+    ax.pcolormesh(A, cmap='Greys', edgecolors='lightgray', linewidth=1, vmin=0, vmax=1.2)
+    xtickidx, xtags = zip(*enumerate(column_labels))
+    kwargs = {'ha': 'left'} if pad else dict()
+    plt.xticks(np.array(xtickidx)+0.5, xtags, rotation = 60, fontsize=fontsize, **kwargs)
+    ax.xaxis.tick_top()
+    ytickidx, ytags = zip(*enumerate(row_labels))
+    ytickargs = {'ha':'left'} if pad else dict()
+    plt.yticks(np.array(ytickidx)+0.5, ytags, fontsize=fontsize, **ytickargs);
+    ax.invert_yaxis()
+    ax.set_aspect('equal')
+    if pad:
+        yax = ax.get_yaxis()
+        yax.set_tick_params(pad=pad)
+    return fig, ax
+
+# def incidence_matrix(incstr, solvefor, sequence, permutation=None, diagonalgray=True):
+#     if permutation==None:
+#         permutation = [solvefor[eqname.ref] for eqname in sequence if eqname.ref in solvefor]
+#         allvars_random_order = list(all_vars_from_incidence(incstr))
+#         permutation += [var for var in allvars_random_order if var not in permutation]
+#     # Building the incidence matrix A
+#     A = np.zeros((len(sequence), len(permutation)))
+#     for idx, fxnode in enumerate(sequence):
+#         varsineq = [elt for elt in incstr[fxnode.ref] if not elt.always_input]
+#         for var in varsineq:
+#             col = permutation.index(var)
+#             color = 0.5 if (diagonalgray and idx == col and fxnode.node_type==INTER) else 1.
+#             A[idx,col] = color
+
+def tree_incidence(root, incstr, solvefor, sequence, permutation=None, figsize=None, display_subsolves=True, showtree=True, diagonalgray=True, pad=100, **kwargs):
     if permutation==None:
-        permutation = list(all_vars_from_incidence(incstr))
-    permutation = sequence_based_permutation + [var for var in permutation if var not in sequence_based_permutation]
+        permutation = [solvefor[eqname.ref] for eqname in sequence if eqname.ref in solvefor]
+        allvars_random_order = list(all_vars_from_incidence(incstr))
+        permutation += [var for var in allvars_random_order if var not in permutation]
+    # Building the incidence matrix A
     A = np.zeros((len(sequence), len(permutation)))
     for idx, fxnode in enumerate(sequence):
         varsineq = [elt for elt in incstr[fxnode.ref] if not elt.always_input]
         for var in varsineq:
             col = permutation.index(var)
-            color = 0.5 if (idx == col and fxnode.node_type==INTER) else 1.
+            color = 0.5 if (idx == col and fxnode.node_type==INTER and diagonalgray) else 1.
             A[idx,col] = color
-    tree_labels = {node: (r"{}${}$".format(pre, node.name)) for pre, _, node in RenderTree(root)}
-    fig = plt.figure(figsize=figsize) if figsize else None
-    fig = plt.pcolormesh(A, cmap='Greys', edgecolors='lightgray', linewidth=1, vmin=0, vmax=1.1, figure=fig)
-    fontsize=16
-    permute_labels = [generate_label(elt) for elt in permutation]
-    xtickidx, xtags = zip(*enumerate(permute_labels))
-    plt.xticks(np.array(xtickidx)+0.5,xtags, rotation = 60, fontsize=fontsize)
-    sequence_labels = [tree_labels[elt] for elt in sequence]
-    ytickidx, ytags = zip(*enumerate(sequence_labels))
-    ax = plt.gca()
-    plt.yticks(np.array(ytickidx)+0.5,ytags, fontsize=fontsize, ha = 'left')
-    ax.xaxis.tick_top()
-    #neqs = len(sequence)
-    for ulcorner, size in allpatches:
-        rect = patches.Rectangle((ulcorner,ulcorner), size, size, linewidth=2, edgecolor='k', facecolor='none')
-        ax.add_patch(rect)
-    ax.invert_yaxis()
-    ax.xaxis.tick_top()
-    yax = ax.get_yaxis()
-    yax.set_tick_params(pad=100)
-    ax.set_aspect('equal');
+    # Generate labels for the x and y axes
+    tree_labels = {node: (r"{}${}$".format(pre if showtree else '', node.name)) for pre, _, node in RenderTree(root)}
+    column_labels = [generate_label(elt) for elt in permutation]
+    row_labels = [tree_labels[elt] for elt in sequence]
+    fig, ax = plot_incidence_matrix(A, column_labels, row_labels, pad, **kwargs)
+    if display_subsolves:
+        allpatches = get_patches(root, sequence, solvefor)
+        for ulcorner, size in allpatches:
+            rect = patches.Rectangle((ulcorner,ulcorner), size, size, linewidth=2, edgecolor='k', facecolor='none')
+            ax.add_patch(rect)
     return fig, ax
 
 

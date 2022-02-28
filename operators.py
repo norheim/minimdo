@@ -10,7 +10,7 @@ def merge_pure(G, mergelts, mergeinto, graphs=None,
     solvefor = [] if solvefor == None else solvefor
     allsolvevars = set()
     for elt in mergelts:
-        if elt.node_type == END:
+        if elt.node_type == END and elt.ref in solvefor:
             allsolvevars.add(solvefor[elt.ref])
     edges = G.edges()
     mergededges = [(fr,to) for fr,to in edges if fr in mergelts or to in mergelts]

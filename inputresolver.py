@@ -53,10 +53,11 @@ def eqvars(eqs):
 def default_out(eqs):
     return {key: left for key,(left,right) in eqs.items()}
 
-def getallvars(eqs):
+def getallvars(eqs, sympy=True):
     vrs = set()
     for left, right in eqs.values():
-        vrs = vrs.union({left}).union(right.free_symbols)
+        right_symbols = right.free_symbols if sympy else set(right)
+        vrs = vrs.union({left}).union(right_symbols)
     return vrs
 
 # TODO: technically only works if we don't have an ill defined set of eqs where multiple equations can have same output
@@ -177,6 +178,7 @@ def var_matched_cons(x, j, not_input):
 def resolve(eqns, vrs, edges, maxiter=50, not_input=None):
     if not_input == None:
         not_input = []
+    output = []
     G = nx.Graph(edges)
     n_eqs = len(eqns)
     # make sure edges are in the right order
@@ -206,8 +208,13 @@ def resolve(eqns, vrs, edges, maxiter=50, not_input=None):
         #print('S',sol)#, rev)
         graphs.append(nx.DiGraph([(r,j) if x[r,j].x>1e-6 else (j,r) for (r, j) in edges]))
         cycles = [elt for elt in scc(x, edges) if len(elt)>1]
-        print('C', cycles)
-        print(counter, m.objVal, [len(cycle)/2 for cycle in cycles]) #[any(elt in cycle for cycle in cycles) for elt in rev]
+        output.append({
+            'C': cycles,
+            'OBJ': m.objVal,
+            'CLEN': [len(cycle)/2 for cycle in cycles],
+            'SOL': sol
+        })
+        #[any(elt in cycle for cycle in cycles) for elt in rev]
         results.append([len(cycle)/2 for cycle in cycles])
         #if len(cycles)==0:
         #    converged = True
@@ -222,4 +229,4 @@ def resolve(eqns, vrs, edges, maxiter=50, not_input=None):
         #m.write("myfile.lp")
         m.addConstr(gp.quicksum(x[(r,j)] for r,j in sol)<= n_eqs-1) # eliminate the full set of combination
         #print("----------------------------")
-    return sol
+    return output

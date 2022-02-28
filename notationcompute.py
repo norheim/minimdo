@@ -1,6 +1,6 @@
 import openmdao.api as om
 from compute import Expcomp, Evaluable
-from utils import normaliz_name
+from utils import normalize_name
 
 class Impcomp(om.ImplicitComponent):
     def initialize(self):
@@ -71,6 +71,6 @@ def solver(groups, eqs, parentid, childid, solvevars, res, maxiter=20):
     child.add_subsystem("res{}".format(''.join(map(str,res))), cmp, promotes=['*'])
 
 def explicit(groups, eqs, parentid, var, eqn):
-    cmp = Expcomp(output_name=str(var), equation=Evaluable.fromsympy(eqs[eqn][1]), debug=False)
+    cmp = Expcomp(output_name=str(var), equation=Evaluable.fromsympy(eqs[eqn][1], tovar=var), debug=False)
     parent = groups[parentid]
     parent.add_subsystem("eq{}".format(eqn), cmp, promotes=['*'])
