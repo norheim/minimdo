@@ -36,7 +36,8 @@ def graphs_from_incidence(branch_node, from_root=False):
     newG = G
     graphs = dict()
     for elt in merge_order:
-        newG, graphs = merge_pure(newG, elt.children, elt, graphs=graphs, solvefor=m.outset)
+        newG, childG = merge_pure(newG, elt.children, elt, solvefor=m.outset)
+        graphs[elt] = childG
     return G, graphs
 
 # make DAG

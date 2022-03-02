@@ -3,10 +3,8 @@ from anytree import Node,findall
 import networkx as nx
 from compute import END, INTER
 
-def merge_pure(G, mergelts, mergeinto, graphs=None, 
-    mergewithold=True, solvefor=None):
+def merge_pure(G, mergelts, mergeinto, mergewithold=True, solvefor=None):
     #Graph
-    graphs = dict() if graphs==None else {key:nx.DiGraph(val.edges()) for key,val in graphs.items()}
     solvefor = [] if solvefor == None else solvefor
     allsolvevars = set()
     for elt in mergelts:
@@ -26,8 +24,8 @@ def merge_pure(G, mergelts, mergeinto, graphs=None,
         newedges += oldedges
     # Tree
     newG = nx.DiGraph(newedges)
-    graphs[mergeinto] = nx.DiGraph(mergededges)
-    return newG, graphs
+    childG = nx.DiGraph(mergededges)
+    return newG, childG
 
 def standardize(elt):
     if elt.children: #node_type = SOLVER or None
