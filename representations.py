@@ -16,9 +16,8 @@ def generate_label(elt, latexlabel=True):
         return r'${}$'.format(str(elt))
 
 def draw(g, pos=None, edge_color='k', width=2, arc=None, figsize=(6,6), 
-        prog='neato', node_size=700, node_shape='s', latexlabels=True, **kwargs):
+        prog='neato', node_size=700, node_color='w', node_shape='s', latexlabels=True, **kwargs):
     node_actual_shape = node_shape
-    node_color = 'w'
     linewidths=2
     label_kwargs = {
         'font_size': 20
@@ -37,7 +36,8 @@ def draw(g, pos=None, edge_color='k', width=2, arc=None, figsize=(6,6),
     plt.margins(0.15)
     if isinstance(node_shape, dict):
         for node, shape in node_shape.items():
-            nx.draw_networkx_nodes(g, pos=pos, node_size=node_size, node_color=node_color, linewidths=linewidths, edgecolors='k', node_shape=shape, nodelist=[node])
+            node_color_i = node_color[node] if isinstance(node_color, dict) else node_color
+            nx.draw_networkx_nodes(g, pos=pos, node_size=node_size, node_color=node_color_i, linewidths=linewidths, edgecolors='k', node_shape=shape, nodelist=[node])
     else:
         nx.draw_networkx_nodes(g, pos=pos, node_size=node_size, node_color=node_color, linewidths=linewidths, edgecolors='k', node_shape=node_actual_shape)
     #https://stackoverflow.com/questions/22785849/drawing-multiple-edges-between-two-nodes-with-networkx
