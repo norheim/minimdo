@@ -52,6 +52,9 @@ def sinks(Ein, Eout, filterto=None):
 def intermediary_variables(Ein, Eout):
     return all_varnodes(Eout).intersection(all_varnodes(Ein))
 
+def solver_children(tree, solver_idx):
+    return (comp for comp,parent_solver in tree.items() if parent_solver==solver_idx)
+
 def flat_graph_formulation(Ein, Eout, Rin):
     edges = all_edges(merge_edges(Ein,Rin), Eout, partial(transform_E, tfx=lambda x: Node(x, COMP), tvar=lambda x: Node(x, VAR)))
     G = nx.DiGraph(edges)

@@ -45,12 +45,10 @@ def merged_graph(subgraph, mergegraph, solver_idx, typed_solve_vars):
     edges = generate_edges(mergegraph, solver_Einout)
     return edges
 
-def merge_graph(G, typed_mergelts, solve_vars, solver_idx=0):
-    typed_solve_vars = {Node(idx, VAR) for idx in solve_vars}
+def merge_graph(G, typed_mergelts, typed_solve_vars, solver_idx=0):
     subgraph, mergegraph = split_graph(G, typed_mergelts)
-    #n_endcomps = len(end_components(subgraph[0]))
-    #assert len(solve_vars) <= n_endcomps
-    allowable_solvevars = sources(*subgraph).intersection(sources(*mergegraph))
+    # Allow for any source except it if it an output from the parent graph
+    allowable_solvevars = sources(*subgraph)-all_varnodes(mergegraph[1])
     assert all(var in allowable_solvevars for var in typed_solve_vars)
     subgraph_edges = all_edges(*subgraph)
     subgraph_G = nx.DiGraph(subgraph_edges)
