@@ -21,13 +21,14 @@ def args_in_order(name_dict, names):
     return [name_dict[in_var] for in_var in names if in_var in name_dict]
     
 class Var(sp.core.Symbol):
-    def __new__(cls, name, value=None, unit=None, always_input=False):
+    def __new__(cls, name, value=None, unit=None, always_input=False, varid=None):
         clear_cache()  # sympys built in cache can cause unexpected bugs
         out = super().__new__(cls, name) #positive=positive)
         out.always_input = always_input
         out.varval = value
         out.varunit = ureg(unit) if unit else ureg('')
         out.forceunit = False
+        out.varid = varid
         return out
 
 class Par(Var):

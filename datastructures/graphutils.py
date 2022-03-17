@@ -12,6 +12,9 @@ Node = namedtuple('NODE', ['name', 'nodetype'])
 Node.__repr__ = lambda x: nodetyperepr[x.nodetype].format(x.name)
 Node.__str__ = Node.__repr__
 
+def make_nodetype(elts, nodetype=COMP):
+    return tuple(Node(node, nodetype) for node in elts)
+
 def filter_comps(E, filterto=None):
     return ((key,val) for key,val in E.items() if not filterto or key in filterto)
 

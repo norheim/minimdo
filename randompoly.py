@@ -19,12 +19,13 @@ def generate_partitions(rng, vrs):
     built_partition = []  # output partition set
     while len(rvrs) >= 3: # 3 is chosen to avoid to many linear/bilinear terms
         ri = rng.integers(2,4) # we wante more than 1 to avoid linear terms
-        built_partition.append((smallrand(), rvrs[:ri]))
+        built_partition.append((smallrand(rng), rvrs[:ri]))
         rvrs = rvrs[ri:] # this is essentially "popping" the element we just added to the partition
     if rvrs:
-        built_partition.append((smallrand(), rvrs))
+        built_partition.append((smallrand(rng), rvrs))
     return built_partition
 
-def random_bijective_polynomial(rng, vrs, partition):
-    return sum([key*reduce(operator.mul, (vrs[var] for var in val)) for key, val in partition])+smallrand(rng)
+def random_bijective_polynomial(rng, vrs, partition=None):
+    partition = partition if partition else generate_partitions(rng, vrs)
+    return sum([key*reduce(operator.mul, val) for key, val in partition])+smallrand(rng)
 
