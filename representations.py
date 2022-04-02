@@ -133,7 +133,7 @@ def get_patches(root, sequence, solvefor):
 
 def plot_incidence_matrix(A, column_labels, row_labels, pad=None, **kwargs):
     fontsize = kwargs.get('fontsize', 16)
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=kwargs.get('figsize',None))
     ax.pcolormesh(A, cmap='Greys', edgecolors='lightgray', linewidth=1, vmin=0, vmax=1.2)
     xtickidx, xtags = zip(*enumerate(column_labels))
     kwargs = {'ha': 'left'} if pad else dict()
@@ -163,7 +163,7 @@ def plot_incidence_matrix(A, column_labels, row_labels, pad=None, **kwargs):
 #             color = 0.5 if (diagonalgray and idx == col and fxnode.node_type==INTER) else 1.
 #             A[idx,col] = color
 
-def tree_incidence(root, incstr, solvefor, sequence, permutation=None, figsize=None, display_subsolves=True, showtree=True, diagonalgray=True, pad=100, **kwargs):
+def tree_incidence(root, incstr, solvefor, sequence, permutation=None, display_subsolves=True, showtree=True, diagonalgray=True, pad=100, **kwargs):
     if permutation==None:
         permutation = [solvefor[eqname.ref] for eqname in sequence if eqname.ref in solvefor]
         allvars_random_order = list(all_vars_from_incidence(incstr))

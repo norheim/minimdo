@@ -2,7 +2,7 @@ import networkx as nx
 from representations import digraph_repr
 from compute import addsolver, SOLVER, INTER, END, RefNode, SolverNode
 from anytree import LevelOrderIter, PreOrderIter
-from operators import merge_pure, standardize
+from operatorsold import merge_pure, standardize
 
 def sortf(e):
     idx, fx = e

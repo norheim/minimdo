@@ -1,5 +1,5 @@
 from enum import Enum
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 from functools import partial
 import networkx as nx
 from representations import draw
@@ -8,6 +8,7 @@ NodeTypes = Enum('NodeTypes', 'VAR COMP SOLVER')
 VAR, COMP, SOLVER = NodeTypes.VAR,NodeTypes.COMP,NodeTypes.SOLVER
 
 nodetyperepr = {VAR: 'x_{}', COMP: 'f_{}', SOLVER: 's_{}'}
+#nodetyperepr = {VAR: '{}', COMP: 'f_{}', SOLVER: 's_{}'}
 Node = namedtuple('NODE', ['name', 'nodetype'])
 Node.__repr__ = lambda x: nodetyperepr[x.nodetype].format(x.name)
 Node.__str__ = Node.__repr__
@@ -34,6 +35,10 @@ def all_edges(Ein, Eout, transform=None, filterto=None):
 def merge_edges(Ein, Rin):
     return {key: var+Rin.get(key, tuple()) for key,var in Ein.items()}
 
+def edges_to_Ein_Eout(edges):
+    Ein, Eout, Rin = edges
+    return merge_edges(Ein, Rin), Eout
+
 def all_components(E):
     return set(E.keys())
 
@@ -52,11 +57,12 @@ def sources(Ein, Eout, filterto=None):
 def sinks(Ein, Eout, filterto=None):
     return all_varnodes(Eout, filterto)-all_varnodes(Ein, filterto)
 
-def intermediary_variables(Ein, Eout):
-    return all_varnodes(Eout).intersection(all_varnodes(Ein))
+def intermediary_variables(Ein, Eout, filterto=None):
+    return all_varnodes(Eout, filterto).intersection(all_varnodes(Ein,filterto))
 
-def solver_children(tree, solver_idx):
-    return (comp for comp,parent_solver in tree.items() if parent_solver==solver_idx)
+def solver_children(tree, solver_idx, solverlist=False):
+    solver_idx = solver_idx if solverlist else [solver_idx]
+    return (comp for comp,parent_solver in tree.items() if parent_solver in solver_idx)
 
 def flat_graph_formulation(Ein, Eout, Rin):
     edges = all_edges(merge_edges(Ein,Rin), Eout, partial(transform_E, tfx=lambda x: Node(x, COMP), tvar=lambda x: Node(x, VAR)))
@@ -72,3 +78,24 @@ def draw_graph_graphical_props(G, colormap=None, defaultcolor='w', **kwargs):
     else:
         node_colors = 'w'
     draw(G, node_shape=node_shapes, node_color=node_colors, latexlabels=False, **kwargs);
+
+def dfs_tree(tree, branch):
+    childrenmap = defaultdict(list)
+    for key,val in tree.items():
+        childrenmap[val].append(key)
+    visited = set()
+    q = [branch]
+    while q:
+        elt = q.pop()
+        visited.add(elt)
+        q.extend(childrenmap.get(elt, []))
+    return visited
+
+def nested_sources(edges, trees, branch):
+    Ein,Eout = edges_to_Ein_Eout(edges)
+    Ftree,_,Vtree=trees
+    descendants = dfs_tree(Vtree, branch)
+    inputs_strictly_below = solver_children(Vtree, descendants-{branch}, solverlist=True)
+    comps_below = solver_children(Ftree, descendants-{branch}, solverlist=True)
+    srcs = sources(Ein, Eout, filterto=comps_below)
+    return srcs - set(inputs_strictly_below)

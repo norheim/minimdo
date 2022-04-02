@@ -2,7 +2,7 @@ from graphutils import merge_edges
 import numpy as np
 import autograd.numpy as anp
 import sympy as sp
-from autograd import grad
+from autograd import grad, jacobian
 from unitutils import evaluable_with_unit
 
 # The following class emulates being a dictionary for sympys lambdify to work
@@ -46,16 +46,16 @@ class Component():
         wrapped_fx = fx if len(inputs) == 1 else (
                 lambda x: fx(*x)) #adapt to numpy
         self.gradient = grad(wrapped_fx)
-        self.njfx = lambda *args: self.gradient(np.array(args).astype(float))
+        self.jacobian = jacobian(lambda x: anp.array(wrapped_fx(x)))
+        self.njfx = lambda *args: self.gradient(np.array(args).astype(float)) # TODO: not sure why this function is here
         self.mapped_names = [arg_mapping[inp] for inp in inputs] if arg_mapping else self.inputs
 
     @classmethod
-    def fromsympy(cls, expr, tovar=None, component=None, arg_mapping=None):
+    def fromsympy(cls, expr, tovar=None, ignoretovar=False, component=None, arg_mapping=None):
         inputs = list(expr.free_symbols)
         fx = sp.lambdify(inputs, expr, anp_math)
-        output_names = (None,)
+        output_names = (tovar.varid,) if tovar and not ignoretovar else (None,) 
         if tovar and not isinstance(type(expr), sp.core.function.UndefinedFunction):# and hasattr(expr, 'dimensionality'): 
-            output_names = (tovar.varid,)
             # this second conditions can be dangerous but need it to fix something
             unitify = evaluable_with_unit(expr, inputs, tovar.varunit) 
             # this is to get the right multiplier, any untis checks will have been done during creation? 

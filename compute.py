@@ -28,7 +28,7 @@ class Var(sp.core.Symbol):
         out.varval = value
         out.varunit = ureg(unit) if unit else ureg('')
         out.forceunit = False
-        out.varid = varid
+        out.varid = varid if varid else name
         return out
 
 class Par(Var):
@@ -193,6 +193,7 @@ def partialfx(fx, input_names):
 
 def eqvar(name, right, unit=None, forceunit=False):
     newvar = Var(name, unit=unit)
+    newvar.forceunit=forceunit # TODO: HACK for sympy function
     if not forceunit:
         rhs_unit = get_unit(right)
         if unit != None:
@@ -217,7 +218,7 @@ class Model():
         return eqs, eqv, dout, dins_clean
 
 
-def adda(branch_node, left, right, pretty_name=True, returnfx=False, returnnode=False, *args, **kwargs):
+def adda(branch_node, left, right, pretty_name=False, returnfx=False, returnnode=False, *args, **kwargs):
     if isinstance(left, str):
         out, eq = eqvar(left, right, *args, **kwargs)
         outsetvar = out
@@ -225,7 +226,7 @@ def adda(branch_node, left, right, pretty_name=True, returnfx=False, returnnode=
         out, eq = None, (left, right)
         outsetvar = left
     m = branch_node.ref
-    name_template = 'f_{{{}}}' if pretty_name else 'f_{}'
+    name_template = 'f_{{{}}}' if pretty_name else '{}'
     fname = name_template.format(len(m.eqs))
     function = Function(fname, original_node_type=INTER)
     tree_node = RefNode(fname, ref=function, node_type=INTER, parent=branch_node)

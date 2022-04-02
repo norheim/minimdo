@@ -53,7 +53,7 @@ class Expcomp(om.ExplicitComponent):
         for idx, input_name in enumerate(input_names):
             partials[output_name,input_name] = J[idx]
 
-def addsolver(mdao, parent_name, solver_name, **kwargs):
+def addsolver(mdao, parent_name, solver_name, kwargs):
     parent = mdao[parent_name]
     child = mdao[solver_name] = parent.add_subsystem(solver_name, 
         om.Group(), promotes=['*'])

@@ -35,19 +35,20 @@ def build_archi(model, exec_instructions_pick, optin):
     prob.setup();
     return prob
 
-def generate_x0(varnames=None, optres=None):
-    varnames = optres.values() if optres else varnames
-    x0 = {name:(optres.get(name, None) if optres else 0.1)+np.random.uniform(10,20)*np.random.randint(-1,1) for name in varnames}
+def generate_x0(varnames=None, optres=None, rand_range=(10,20), fixed_direction=None):
+    direction = lambda : fixed_direction if fixed_direction else np.random.choice([-1,1]) 
+    varnames = optres.keys() if optres else varnames
+    x0 = {name:(optres.get(name, None) if optres else 0.1)+np.random.uniform(*rand_range)*direction() for name in varnames}
     return x0
 
 def extractvals(prob, vrs):
     return {key.name: prob.get_val(key.name)[0] for key in 
-          vrs.values()}
+          vrs}
 
-def run_and_save_archi(prob, x0, vrs, optres_all):
+def run_and_save_archi(prob, x0, vrs):
     for key,val in x0.items():
         prob.set_val(key,val)
     prob.run_model()
-    optres = extractvals(prob, vrs)
-    optres_all.append(extractvals(prob, vrs)) # for immutability?
-    return optres
+    optres = extractvals(prob, vrs.values())
+    optres_save = extractvals(prob, vrs.values())
+    return optres, optres_save

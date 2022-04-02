@@ -9,7 +9,7 @@ import operator
 def smallrand(rng, n=1):
     newn = np.round(rng.uniform(low=-1, high=1),n)
     if newn == 0.: # if we are unlucky because of the rounding
-        return smallrand()
+        return smallrand(rng)
     return newn
 
 # Generates a random partition of a set of variables [1,2,3] into [[3,2],[1]]
