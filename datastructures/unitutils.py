@@ -33,48 +33,56 @@ class MockFloat(float):
     def __xor__(self, other):
         return self
 
-def get_unit(expr):
-    if isinstance(expr, Var):
-        return expr.varunit
-    else:
-        free_symbols = list(expr.free_symbols)
-        if free_symbols:
-            fx = sp.lambdify(free_symbols, expr, np)
-            args = (ureg.Quantity(MockFloat(1), free_symbol.varunit) for free_symbol in free_symbols)
-            dim = fx(*args)
-            # need this case rhs_unit is a float, which can happen when we have powers, e.g. 10^x
-            if not isinstance(dim, ureg.Quantity):
-                dim = ureg('')
-            return dim
+def expression_conversion_unit(expr_unit, tounit=None):
+    unit = tounit if tounit else ureg('')
+    if tounit:
+        assert(unit.dimensionality == expr_unit.dimensionality)
+        conversion_unit = unit
+    else: # tounit was not given
+        if not hasattr(expr_unit, 'units'):
+            conversion_unit = ureg('')
         else:
-            return ureg('') #most likely we encountered a number
+            # if we evaluate an expression and get some crazy unit 
+            # we bring it back to it's base dimensionality
+            conversion_unit = ureg.Quantity(1, 
+                expr_unit.to_base_units().units)
+    return conversion_unit
 
 def get_unit_multiplier(unit):
     return unit.to_base_units().magnitude
 
-def unit_conversion_factors(right, orig_unit, symb_order):
-    unit = orig_unit if orig_unit else ureg('')
-    rhs_unit = get_unit(right)
-    convert = np.array([get_unit_multiplier(free_symbol.varunit) for 
-            free_symbol in symb_order])
-    if orig_unit:
-        assert(unit.dimensionality == rhs_unit.dimensionality)
-        conversion_unit = unit
-    else: # unitstr was not given
-        if not hasattr(rhs_unit, 'units'):
-            conversion_unit = ureg('')
-        else:
-            conversion_unit = ureg.Quantity(1, 
-                rhs_unit.to_base_units().units)
+def unit_conversion_factors(outunitpairs, inunits):
+    convert = np.array([get_unit_multiplier(inp) for 
+            inp in inunits])
+    factors = []
+    for outunit, tounit in outunitpairs:
+        conversion_unit = expression_conversion_unit(outunit, tounit)
+        factor = get_unit_multiplier(conversion_unit)
+        factors.append(factor)
+    return convert, factors
 
-    factor = get_unit_multiplier(conversion_unit)
-    return convert, factor
+def listify(out):
+    return out if isinstance(out, list) else [out]
 
-def evaluable_with_unit(right, symb_order, tovar=None):
-    convert, factor = unit_conversion_factors(right, tovar, symb_order)
-    def correction(fx):
-        def rhsfx_corrected(*args):
-            return fx(*(convert*np.array(args).flatten()))/factor
-        return rhsfx_corrected
+def get_unit(fx, inputunits):
+    args = (ureg.Quantity(MockFloat(1), inputunit) for inputunit in inputunits)
+    dim = fx(*args)
+    dims = listify(dim)
+    # need this case if output is a float, which can happen when we have powers, e.g. 10^x:
+    dims = [dim if isinstance(dim, ureg.Quantity) else ureg('') for dim in dims]
+    return dims
 
-    return correction
+def flatten_list(ls):
+    return ls if np.isscalar(ls)==1 else list(ls)
+
+def executable_with_conversion(convert, factors, fx):
+    def scaled_fx(*args):
+        return flatten_list(np.array(fx(*(convert*np.array(args).flatten())))/factors)
+    return scaled_fx
+
+def fx_with_units(fx, inunitsflat, outunitsflat):
+    expr_units = get_unit(fx, inunitsflat)
+    outunitpairs = tuple((outunit, outunitsflat[idx]) for idx, outunit in enumerate(expr_units))
+    convert, factors = unit_conversion_factors(outunitpairs, inunitsflat)
+    fx_scaled = executable_with_conversion(convert, factors, fx)
+    return fx_scaled

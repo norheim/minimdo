@@ -3,7 +3,8 @@ import numpy as np
 import autograd.numpy as anp
 import sympy as sp
 from autograd import grad, jacobian
-from unitutils import evaluable_with_unit
+from unitutils import fx_with_units
+from compute import ureg
 
 # The following class emulates being a dictionary for sympys lambdify to work
 # with autograd
@@ -11,6 +12,17 @@ math_functions = ['cos', 'sin', 'tan', 'arccos', 'arcsin', 'arctan', 'sqrt',
 'exp', 'log', 'log2', 'log10']
 
 anp_math = {elt: getattr(anp, elt) for elt in math_functions}
+
+def generate_grad(fx, inputs, outputs, indims, outdims):
+    f = lambda x: anp.hstack(fx(*anp.split(x, anp.cumsum(indims[:-1]))))
+    g = jacobian(f)
+    def getgrad(*inargs):
+        ins = np.hstack(inargs).astype(float)
+        jout = g(ins)
+        outsplit = zip(outputs, np.split(jout, outdims[:-1], axis=0))
+        insplit = lambda grads: zip(inputs, np.split(grads, np.cumsum(indims[:-1]), axis=1))
+        return {(outvr, invr):np.squeeze(grad) for outvr,grads in outsplit for invr,grad in insplit(grads)}
+    return getgrad
 
 def args_in_order(name_dict, names):
     return [name_dict[in_var] for in_var in names if in_var in name_dict]
@@ -36,31 +48,35 @@ def partialfx(fx, input_names):
     return wrapper
 
 class Component():
-    def __init__(self, fx, inputs=None, outputs=None, component=None, fxdisp=None, arg_mapping=None):
+    def __init__(self, fx, inputs=None, outputs=None, component=None, indims=None, outdims=None, fxdisp=None, arg_mapping=None):
         inputs = inputs if inputs else fx.__code__.co_varnames
         self.inputs = inputs
+        self.indims = indims if indims else tuple(1 for elt in inputs)
         self.outputs = outputs
+        self.outdims = outdims if outdims else tuple(1 for elt in outputs)
         self.component = component
         self.fxdisp = fxdisp
-        self.function = partialfx(fx, inputs)
-        wrapped_fx = fx if len(inputs) == 1 else (
-                lambda x: fx(*x)) #adapt to numpy
-        self.gradient = grad(wrapped_fx)
-        self.jacobian = jacobian(lambda x: anp.array(wrapped_fx(x)))
-        self.njfx = lambda *args: self.gradient(np.array(args).astype(float)) # TODO: not sure why this function is here
+        self.function = fx
+        self.gradient = generate_grad(fx, inputs, outputs, indims, outdims)
         self.mapped_names = [arg_mapping[inp] for inp in inputs] if arg_mapping else self.inputs
+
+    @classmethod
+    def withunits(cls, fx, inputs, outputs, inunitmap, outunitmap, component=None):
+        inpunitsflat = tuple(ureg(inunitmap[inpvar]) for inpvar in inputs)
+        outunitsflat = tuple(ureg(outunitmap[outvar]) for outvar in outputs)
+        fx_scaled = fx_with_units(fx, inpunitsflat, outunitsflat)
+        return cls(fx_scaled, inputs, outputs, component)
 
     @classmethod
     def fromsympy(cls, expr, tovar=None, ignoretovar=False, component=None, arg_mapping=None):
         inputs = list(expr.free_symbols)
+        inpunitsflat = tuple(inpvar.varunit for inpvar in inputs)
         fx = sp.lambdify(inputs, expr, anp_math)
         output_names = (tovar.varid,) if tovar and not ignoretovar else (None,) 
         if tovar and not isinstance(type(expr), sp.core.function.UndefinedFunction):# and hasattr(expr, 'dimensionality'): 
             # this second conditions can be dangerous but need it to fix something
-            unitify = evaluable_with_unit(expr, inputs, tovar.varunit) 
-            # this is to get the right multiplier, any untis checks will have been done during creation? 
-            # TODO: check this
-            fx = unitify(fx)
+            outunitsflat = (tovar.varunit,)
+            fx = fx_with_units(fx, inpunitsflat, outunitsflat) 
         input_names = tuple(inp.varid for inp in inputs)
         return cls(fx, input_names, output_names, component, expr, arg_mapping)
 
