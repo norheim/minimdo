@@ -1,5 +1,5 @@
 import openmdao.api as om
-
+from workflow import OPT, OBJ, NEQ, EQ, SOLVE, IMPL, EXPL
 class Impcomp(om.ImplicitComponent):
     def initialize(self):
         self.options.declare('components')
@@ -57,7 +57,34 @@ class Expcomp(om.ExplicitComponent):
         for (outvar,invar),val in J.items():
             partials[outvar,invar] = val
 
-def addsolver(mdao, parent_name, solver_name, kwargs):
+def addoptimizer(mdao, parentname, solvername, design_vars, options, varoptions):
+    root = mdao[parentname]
+    prob = mdao['prob']
+    child = mdao[solvername] = root.add_subsystem(solvername, 
+        om.Group(), promotes=['*'])
+    for desvar in design_vars:
+        if varoptions and desvar in varoptions:
+            lb, ub = varoptions[desvar]
+            root.add_design_var(desvar, lb, ub)
+        else:
+            root.add_design_var(desvar)
+    prob.set_solver_print(level=1)
+    prob.driver = om.ScipyOptimizeDriver()
+    # prob.driver.options['optimizer'] = 'differential_evolution'
+    for key,var in options.items():
+        root.driver.options[key] = var 
+
+def addoptfunc(mdao, functype, parentname, compname, inputs, output, fx, gradfx):
+    root = mdao[parentname]
+    addexpcomp(mdao, parentname, compname, inputs, (output,), fx, gradfx)
+    if functype in [NEQ, EQ]:
+        bnds = {'upper':0.} if NEQ else {'upper':0., 'lower':0.}
+        root.add_constraint(output, **bnds)
+    elif functype == OBJ :
+        root.add_objective(output)
+
+
+def addsolver(mdao, parent_name, solver_name, kwargs, varoptions):
     parent = mdao[parent_name]
     child = mdao[solver_name] = parent.add_subsystem(solver_name, 
         om.Group(), promotes=['*'])

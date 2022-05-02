@@ -1,13 +1,17 @@
 import numpy as np
 import openmdao.api as om
 from graphutils import Node, VAR, sources, merge_edges
-from workflow import EXPL, IMPL, SOLVE
-from executionblocks import addexpcomp, addimpcomp, addsolver
+from workflow import EXPL, IMPL, SOLVE, OPT, EQ, NEQ, OBJ
+from executionblocks import addexpcomp, addimpcomp, addsolver, addoptimizer, addoptfunc
 
 architecture_mappings = {
         EXPL: addexpcomp,
         IMPL: addimpcomp,
-        SOLVE: addsolver
+        SOLVE: addsolver,
+        OPT: addoptimizer,
+        EQ: addoptfunc,
+        NEQ: addoptfunc,
+        OBJ: addoptfunc
     }
 
 def buildidpvars(inputs, model):

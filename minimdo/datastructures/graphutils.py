@@ -5,6 +5,7 @@ import networkx as nx
 from representations import draw
 
 NodeTypes = Enum('NodeTypes', 'VAR COMP SOLVER')
+NodeTypes.__repr__ = lambda x: x.name
 VAR, COMP, SOLVER = NodeTypes.VAR,NodeTypes.COMP,NodeTypes.SOLVER
 default_nodetyperepr = {VAR: 'x_{}', COMP: 'f_{}', SOLVER: 's_{}'}
 class Node():
@@ -72,6 +73,10 @@ def sinks(Ein, Eout, filterto=None):
 def intermediary_variables(Ein, Eout, filterto=None):
     return all_varnodes(Eout, filterto).intersection(all_varnodes(Ein,filterto))
 
+def all_solvers(tree):
+    Ftree, Stree, _ = tree
+    return set(Stree.values()).union(set(Ftree.values()))
+
 def solver_children(tree, solver_idx, solverlist=False):
     solver_idx = solver_idx if solverlist else [solver_idx]
     return (comp for comp,parent_solver in tree.items() if parent_solver in solver_idx)
@@ -105,8 +110,8 @@ def dfs_tree(tree, branch):
 
 def nested_sources(edges, trees, branch):
     Ein,Eout = edges_to_Ein_Eout(edges)
-    Ftree,_,Vtree=trees
-    descendants = dfs_tree(Vtree, branch)
+    Ftree,Stree,Vtree=trees
+    descendants = dfs_tree(Stree, branch)
     inputs_strictly_below = solver_children(Vtree, descendants-{branch}, solverlist=True)
     comps_below = solver_children(Ftree, descendants-{branch}, solverlist=True)
     srcs = sources(Ein, Eout, filterto=comps_below)
