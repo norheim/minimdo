@@ -124,38 +124,3 @@ def mdao_workflow(sequence, solvers_options, comp_options=None, var_options=None
                 designvars = solvers_options[parent]['designvars']
                 workflow.append((IMPL, content, designvars, parent))
     return workflow 
-
-def generate_workflow(lookup_f, edges, tree, solvers_options=None, comp_options=None, debug=False):
-    solvers_options = default_solver_options(solvers_options)
-    Fend = end_components(edges[1])
-    Ftree, Stree, Vtree = tree
-    visited = set()
-    workflow = []
-    Ftree_copy = OrderedDict(Ftree)
-    while Ftree_copy:
-        key, parentsolver = Ftree_copy.popitem(last=False)
-        parent_solver_node = Node(parentsolver,SOLVER)
-        solverpath = path(Stree, parentsolver, visited)
-        solverpath_rev = solverpath[::-1]
-        visited = visited.union(solverpath)
-        f = [elt for elt in solver_children(Ftree_copy, parentsolver) if elt in Fend]
-        for solver_idx in solverpath_rev:
-            parent_solver = Stree.get(solver_idx, None)
-            parent_solver_name = str(Node(parent_solver,SOLVER)) if parent_solver else None
-            solver_options = solvers_options[solver_idx] 
-            solver_type = solver_options['type']
-            workflow.append((solver_type, parent_solver_name, str(Node(solver_idx, SOLVER)), solver_options))
-        if key in Fend and not f: #the last one
-            fends = [elt for elt in solver_children(Ftree, parentsolver) if elt in Fend]
-            if not solvers_options[parentsolver]['type'] == OPT:
-                args = addimpcomp_args(lookup_f, parent_solver_node, fends, list(solver_children(Vtree, parentsolver)))
-                workflow.append((IMPL, *args))
-            else:
-                for fend in fends:
-                    function_role = comp_options[fend]
-                    args = (parent_solver_node, function_role, lookup_f(fend))
-                    workflow.append((function_role, *args)) #this would add them as design variable
-        elif key not in Fend: 
-            args = addexpcomp_args(lookup_f, parent_solver_node, key, debug)
-            workflow.append(args)
-    return workflow
