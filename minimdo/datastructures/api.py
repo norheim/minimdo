@@ -1,21 +1,34 @@
 from collections import OrderedDict
 from itertools import chain
-from execution import sympy_fx_inputs, Component
+from execution import sympy_fx_inputs, Component, edges_from_components
 from unitutils import get_unit, ureg
 from compute import Var
+from workflow import NEQ, EQ, OBJ, OPT, SOLVE
+from graphutils import VAR, COMP, SOLVER
+from runpipeline import nestedform_to_mdao
 
 class SolverRef():
     def __init__(self, idx, modelref):
         self.model = modelref
         self.idx = idx
 class Model():
-    def __init__(self):
+    def __init__(self, root=None, nametyperepr=None):
+        solvers_options = {1: {"type":OPT}} if root==OPT else {}
+        self.solvers_options = solvers_options
+        self.nametyperepr = nametyperepr if nametyperepr is not None else {VAR: '{}', COMP: 'f{}', SOLVER: 's{}'}
         self.components = []
+        self.comp_options = {}
+        self.var_options = {}
         self.Ftree = OrderedDict()
         self.Stree = dict()
         self.Vtree = dict()
         self.root = SolverRef(1,self)
         self.comp_by_var = dict()
+
+    def generate_mdao(self, mdf=True):
+        edges = edges_from_components(self.components)
+        tree = self.Ftree, self.Stree, self.Vtree
+        return nestedform_to_mdao(edges, tree, self.components, self.solvers_options, self.comp_options, self.var_options, self. nametyperepr, mdf)
 
 def var_from_expr(name, expr, unit=None, forceunit=False):
     newvar = Var(name, unit=unit)
@@ -60,7 +73,23 @@ def addsolver(solver, comps=None, solvefor=None):
         model.Vtree[elt] = next_solver_idx
     return SolverRef(next_solver_idx, model)
 
-def setsolvefor(solver, solvefor):
+def setsolvefor(solver, solvefor, varoptions):
     model = solver.model
     for elt in solvefor:
         model.Vtree[elt.varid] = solver.idx
+    varoptionsstr = {str(key):var for key,var in varoptions.items()}
+    model.var_options.update(varoptionsstr)
+
+def addoptfunc(solver, right, name=None, functype=EQ):
+    comp_idx = addf(solver, right, name=None)
+    model = solver.model
+    model.comp_options[comp_idx] = functype
+
+def addineq(solver, right, name=None):
+    addoptfunc(solver, right, name, NEQ)
+
+def addeq(solver, right, name=None):
+    addoptfunc(solver, right, name, EQ)
+
+def addobj(solver, right, name=None):
+    addoptfunc(solver, right, name, OBJ)

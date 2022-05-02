@@ -1,6 +1,7 @@
 from enum import Enum
 from collections import namedtuple, defaultdict
 from functools import partial
+from itertools import chain
 import networkx as nx
 from representations import draw
 
@@ -116,3 +117,26 @@ def nested_sources(edges, trees, branch):
     comps_below = solver_children(Ftree, descendants-{branch}, solverlist=True)
     srcs = sources(Ein, Eout, filterto=comps_below)
     return srcs - set(inputs_strictly_below)
+
+def path(Stree, s, visited=None):
+    visited = visited if visited else set()
+    out = []
+    if s in chain(Stree.values(),Stree.keys()):
+        q = {s}  
+    else:
+        q = set()
+        out = [s] if s not in visited else [] # we should at least return the parent node
+    while q:
+        s = q.pop()
+        if s not in visited:
+            out.append(s)
+            if s in Stree:
+                q.add(Stree[s])
+        visited.add(s)
+    return out
+
+def root_solver(tree):
+    Ftree, Stree, _ = tree
+    spath = path(Stree, next(iter(Ftree.values())))
+    root = spath[-1] # last element
+    return root

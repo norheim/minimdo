@@ -1,7 +1,7 @@
 from itertools import chain
 from enum import Enum
 from collections import OrderedDict
-from graphutils import merge_edges, solver_children, end_components, Node, SOLVER, VAR, COMP, all_solvers
+from graphutils import merge_edges, solver_children, end_components, Node, SOLVER, VAR, COMP, all_solvers, path
 from utils import normalize_name
 
 NodeTypesExtended = Enum('NodeTypesExtended', 'ENDCOMP')
@@ -19,22 +19,6 @@ def namefromid(nodetyperepr):
             return nodetyperepr[elttype].format(eltids)
     return nameingfunction
 
-def path(Stree, s, visited=None):
-    visited = visited if visited else set()
-    out = []
-    if s in chain(Stree.values(),Stree.keys()):
-        q = {s}  
-    else:
-        q = set()
-        out = [s] if s not in visited else [] # we should at least return the parent node
-    while q:
-        s = q.pop()
-        if s not in visited:
-            out.append(s)
-            if s in Stree:
-                q.add(Stree[s])
-        visited.add(s)
-    return out
 
 def get_f(f, edges):
     #TODO: ensure that elt.inputs is of same type as Ein[comp], eg. str

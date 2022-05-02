@@ -1,6 +1,22 @@
 # designresolver
 Toolkit for formulating conceptual design equations, changing between declarative and input/output formulations and solve the resulting system of equations.
 
+# Minimal example
+```python
+z1,z2,x,y2 = Var('z1'), Var('z2'), Var('x'), Var('y2')
+
+model = Model(root=OPT)
+m = model.root
+a = adda(m, 'a', z2+x-0.2*y2)
+y1 = adda(m, 'y1', z1**2+a)
+adda(m, y2, y1**0.5+z1+z2)
+addobj(m, x**2+z1+y1+exp(-y2)) #addobj
+addineq(m, 3.16-y1) #addineq
+addineq(m, y2-24) #addineq
+setsolvefor(m, [x,z1,z2], {x:[0,10], z1:[0,10], z2:[0,10]})
+prob, mdao_in, groups = model.generate_mdao()
+```
+
 # organization
 + ds: data structures
 |--- ds_symbolic

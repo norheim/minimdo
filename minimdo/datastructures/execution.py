@@ -124,6 +124,6 @@ def residual_component(c, idx=0):
     fx = lambda *x: newfx(c, *x)
     return Component(fx, newinputs, (None,), idx, newindims, c.outdims)
 
-def generate_components_and_residuals(model, edges):
-    rcomps = [residual_component(c, c.component) for c in model.components if c.component in edges[2].keys()]
-    return model.components+rcomps
+def generate_components_and_residuals(components, edges):
+    rcomps = [residual_component(c, c.component) for c in components if c.component in edges[2].keys()]
+    return components+rcomps

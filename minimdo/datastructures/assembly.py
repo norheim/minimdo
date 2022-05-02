@@ -1,6 +1,6 @@
 import numpy as np
 import openmdao.api as om
-from graphutils import Node, VAR, sources, merge_edges
+from graphutils import root_solver, nested_sources
 from workflow import EXPL, IMPL, SOLVE, OPT, EQ, NEQ, OBJ
 from executionblocks import addexpcomp, addimpcomp, addsolver, addoptimizer, addoptfunc
 
@@ -23,21 +23,20 @@ def buildidpvars(inputs, model):
         comp.add_output(str(elt), val)
     model.add_subsystem('inp', comp, promotes=['*'])
 
-def build_archi(edges, tree, workflow, transform_inputs=True):
-    Ftree, Stree, Vtree = tree
-    Ein, Eout, Rin = edges
-    Ein = merge_edges(Ein, Rin)
+def build_archi(edges, tree, workflow):
+
     # Build MDO model
     prob = om.Problem()
     mdo_model = prob.model
-    groups = {None:mdo_model}
-    mdao_in = {str(Node(elt, VAR)) if transform_inputs else elt for elt in sources(Ein, Eout)-Vtree.keys()}
+    groups = {'prob': prob, None:mdo_model}
+    root = root_solver(tree)
+    mdao_in = nested_sources(edges, tree, root)
     buildidpvars(mdao_in, mdo_model)
     
     # This next step actually builds all the openMDAO components
     for comp_type, *comp_args in workflow:
-        #print(comp_type, comp_args[:3])
-        architecture_mappings[comp_type](groups, *comp_args)
+        args = [comp_type] + comp_args if comp_type in [NEQ, EQ, OBJ] else comp_args
+        architecture_mappings[comp_type](groups, *args)
     
     #mdo_model.nonlinear_solver = om.NewtonSolver(solve_subsystems=True)
     prob.setup();
