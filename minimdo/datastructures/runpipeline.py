@@ -13,14 +13,14 @@ def get_solver_implicit_system(groups, tree, solver_idx):
     name = implicit_comp_name((Node(idx, COMP) for idx in solver_children(tree[0], solver_idx)))
     return getattr(s, name)
 
-def nestedform_to_mdao(edges, tree, components, solver_options, comp_options, var_options, nodetyperepr, mdf=True):
+def nestedform_to_mdao(edges, tree, components, solvers_options, comp_options, var_options, nodetyperepr, mdf=True):
     namingfunc = namefromid(nodetyperepr)
     G = flat_graph_formulation(*edges)
     merge_order = sort_scc(G)
     merge_parent = root_solver(tree) # all merged components will have this solver as the parent
     ordered_edges, ordered_tree = reorder_merge_solve(edges, tree, merge_order, merge_parent, mdf)
     sequence = order_from_tree(ordered_tree[0], ordered_tree[1], ordered_edges[1])
-    solvers_options = default_solver_options(ordered_tree, solver_options)
+    solvers_options = default_solver_options(ordered_tree, solvers_options)
     wf = mdao_workflow(sequence, solvers_options, comp_options, var_options)
     all_components = generate_components_and_residuals(components, ordered_edges)
     lookup_f = get_f(all_components, ordered_edges)

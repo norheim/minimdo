@@ -73,11 +73,14 @@ def addsolver(solver, comps=None, solvefor=None):
         model.Vtree[elt] = next_solver_idx
     return SolverRef(next_solver_idx, model)
 
-def setsolvefor(solver, solvefor, varoptions):
+def setsolvefor(solver, solvefor, varoptions=None):
     model = solver.model
     for elt in solvefor:
         model.Vtree[elt.varid] = solver.idx
-    varoptionsstr = {str(key):var for key,var in varoptions.items()}
+    if varoptions:
+        varoptionsstr = {str(key):var for key,var in varoptions.items()}
+    else:
+        varoptionsstr = {}
     model.var_options.update(varoptionsstr)
 
 def addoptfunc(solver, right, name=None, functype=EQ):

@@ -21,7 +21,7 @@ m = model.root
 a = adda(m, 'a', z2+x-0.2*y2)
 y1 = adda(m, 'y1', z1**2+a)
 adda(m, y2, y1**0.5+z1+z2)
-addobj(m, x**2+z1+y1+exp(-y2)) #addobj
+addobj(m, x**2+z2+y1+exp(-y2)) #addobj
 addineq(m, 3.16-y1) #addineq
 addineq(m, y2-24) #addineq
 setsolvefor(m, [x,z1,z2], {x:[0,10], z1:[0,10], z2:[0,10]})
@@ -49,8 +49,8 @@ prob, mdao_in, groups = model.generate_mdao()
 # wfmdao = mdao_workflow_with_args(wf, lookup_f, namingfunc)
 # prob, mdao_in, groups = build_archi(nedges, ntree, wfmdao)
 
-prob.set_val('x', 2.0)
-prob.set_val('z1', 2.0)
-prob.set_val('z2', 2.0)
+prob.set_val('x', 1.0)
+prob.set_val('z1', 1.0)
+prob.set_val('z2', 1.0)
 #prob.run_model()
 prob.run_driver()
