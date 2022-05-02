@@ -6,7 +6,7 @@ This is minimal code for running the Sellar problem
 ```python
 z1,z2,x,y2 = Var('z1'), Var('z2'), Var('x'), Var('y2')
 
-model = Model(root=OPT)
+model = Model(solver=OPT)
 m = model.root
 a = adda(m, 'a', z2+x-0.2*y2)
 y1 = adda(m, 'y1', z1**2+a)

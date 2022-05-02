@@ -12,8 +12,8 @@ class SolverRef():
         self.model = modelref
         self.idx = idx
 class Model():
-    def __init__(self, root=None, nametyperepr=None):
-        solvers_options = {1: {"type":OPT}} if root==OPT else {}
+    def __init__(self, solver=None, nametyperepr=None):
+        solvers_options = {1: {"type":OPT}} if solver==OPT else {}
         self.solvers_options = solvers_options
         self.nametyperepr = nametyperepr if nametyperepr is not None else {VAR: '{}', COMP: 'f{}', SOLVER: 's{}'}
         self.components = []
