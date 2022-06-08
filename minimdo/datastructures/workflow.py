@@ -11,15 +11,6 @@ ExecutionTypes = Enum('ExecutionTypes', 'EXPL IMPL EQ NEQ OBJ SOLVE OPT')
 ExecutionTypes.__repr__ = lambda x: x.name
 EXPL, IMPL, EQ, NEQ, OBJ, SOLVE, OPT = ExecutionTypes.EXPL,ExecutionTypes.IMPL,ExecutionTypes.EQ,ExecutionTypes.NEQ,ExecutionTypes.OBJ,ExecutionTypes.SOLVE,ExecutionTypes.OPT
 
-def namefromid(nodetyperepr):
-    def nameingfunction(eltids, elttype, isiter=False):
-        if isiter:
-            return tuple(nodetyperepr[elttype].format(eltid) for eltid in eltids)
-        else:
-            return nodetyperepr[elttype].format(eltids)
-    return nameingfunction
-
-
 def get_f(f, edges):
     #TODO: ensure that elt.inputs is of same type as Ein[comp], eg. str
     f_lookup = {(frozenset(elt.inputs),elt.component,frozenset(elt.outputs)): elt for elt in f}

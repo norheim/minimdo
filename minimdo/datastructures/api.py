@@ -24,10 +24,15 @@ class Model():
         self.Vtree = dict()
         self.root = SolverRef(1,self)
         self.comp_by_var = dict()
+        self.idmapping = {}
 
-    def generate_mdao(self, mdf=True):
+    def generate_formulation(self):
         edges = edges_from_components(self.components)
         tree = self.Ftree, self.Stree, self.Vtree
+        return edges, tree
+
+    def generate_mdao(self, mdf=True):
+        edges, tree = self.generate_formulation()
         return nestedform_to_mdao(edges, tree, self.components, self.solvers_options, self.comp_options, self.var_options, self. nametyperepr, mdf)
 
 def var_from_expr(name, expr, unit=None, forceunit=False):
@@ -42,11 +47,19 @@ def var_from_expr(name, expr, unit=None, forceunit=False):
         newvar.varunit = ureg.Quantity(1, rhs_unit.to_base_units().units)
     return newvar
 
+def addvars(model, right, left=None):
+    d = {elt.varid: elt for elt in right}
+    if left:
+        d[left.varid] = left
+    model.idmapping.update(d)
+
+
 def adda(solver, left, right, *args, **kwargs):
     model = solver.model
     comp_idx = len(model.Ftree)
     if isinstance(left, str):
         left = var_from_expr(left, right, *args, **kwargs)
+    addvars(model, right.free_symbols, left)
     comp = Component.fromsympy(right, left, component=comp_idx)
     model.components.append(comp)
     model.Ftree[comp_idx] = solver.idx
@@ -55,6 +68,7 @@ def adda(solver, left, right, *args, **kwargs):
 
 def addf(solver, right, name=None):
     model = solver.model
+    addvars(model, right.free_symbols)
     comp_idx = name if name else len(model.Ftree)
     comp = Component.fromsympy(right, component=comp_idx)
     model.components.append(comp)
@@ -65,7 +79,7 @@ def addsolver(solver, comps=None, solvefor=None):
     comps = comps if comps else []
     solvefor = solvefor if solvefor else []
     model = solver.model
-    next_solver_idx = max(chain(model.Stree.values(),[1]))+1
+    next_solver_idx = max(chain(model.Stree.keys(),[1]))+1
     model.Stree[next_solver_idx] = solver.idx
     for elt in comps:
         model.Ftree[elt] = next_solver_idx

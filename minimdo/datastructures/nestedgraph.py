@@ -1,6 +1,7 @@
 from collections import defaultdict
-from graphutils import flat_graph_formulation, solver_children, Node, COMP, SOLVER, VAR
-from mergegraph import merge_graph
+from telnetlib import GA
+from graphutils import flat_graph_formulation, solver_children, Node, COMP, SOLVER, VAR, root_solver, all_components, sources, edges_to_Ein_Eout
+from mergegraph import merge_graph, split_graph
 
 def level_order_tree(tree, root=1):
     level_order = [root]
@@ -30,3 +31,20 @@ def build_typedgraph(edges, tree, nodetyperepr):
         merge_comps = component_nodes.union(solver_nodes)
         G_parent, graphs[solver_idx] = merge_graph(G_parent, merge_comps, solve_vars, solver_idx, nodetyperepr)
     return graphs
+
+def root_sources(edges, trees):
+    all_srcs = sources(*edges_to_Ein_Eout(edges))
+    _,_,Vtree = trees
+    srcs = all_srcs - Vtree.keys()
+    # root = root_solver(tree)
+    # g = build_typedgraph(edges, tree, nodetyperepr)
+    # G = g[root]
+    # Ein = defaultdict(list)
+    # Eout = defaultdict(list)
+    # for fr,to in G.edges():
+    #     if fr.nodetype == VAR:
+    #         Ein[to].append(fr)
+    #     else:
+    #         Eout[fr].append(to)
+    # srcs = sources(Ein, Eout)
+    return srcs

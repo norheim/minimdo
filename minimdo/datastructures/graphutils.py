@@ -9,6 +9,15 @@ NodeTypes = Enum('NodeTypes', 'VAR COMP SOLVER')
 NodeTypes.__repr__ = lambda x: x.name
 VAR, COMP, SOLVER = NodeTypes.VAR,NodeTypes.COMP,NodeTypes.SOLVER
 default_nodetyperepr = {VAR: 'x_{}', COMP: 'f_{}', SOLVER: 's_{}'}
+
+def namefromid(nodetyperepr):
+    def nameingfunction(eltids, elttype, isiter=False):
+        if isiter:
+            return tuple(nodetyperepr[elttype].format(eltid) for eltid in eltids)
+        else:
+            return nodetyperepr[elttype].format(eltids)
+    return nameingfunction
+
 class Node():
     def __init__(self, name, nodetype, nodetyperepr=None):
         self.nodetyperepr = nodetyperepr if nodetyperepr else default_nodetyperepr

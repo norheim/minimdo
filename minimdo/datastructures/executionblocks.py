@@ -60,8 +60,9 @@ class Expcomp(om.ExplicitComponent):
 def addoptimizer(mdao, parentname, solvername, design_vars, options, varoptions):
     root = mdao[parentname]
     prob = mdao['prob']
-    child = mdao[solvername] = root.add_subsystem(solvername, 
-        om.Group(), promotes=['*'])
+    mdao[solvername] = prob.model
+    #root.add_subsystem(solvername, 
+    #    om.Group(), promotes=['*'])
     for desvar in design_vars:
         if varoptions and desvar in varoptions:
             lb, ub = varoptions[desvar]
@@ -69,10 +70,9 @@ def addoptimizer(mdao, parentname, solvername, design_vars, options, varoptions)
         else:
             root.add_design_var(desvar)
     prob.set_solver_print(level=1)
-    prob.driver = om.ScipyOptimizeDriver()
+    prob.driver = om.ScipyOptimizeDriver(**options)
     # prob.driver.options['optimizer'] = 'differential_evolution'
-    for key,var in options.items():
-        root.driver.options[key] = var 
+
 
 def addoptfunc(mdao, functype, parentname, compname, inputs, output, fx, gradfx):
     root = mdao[parentname]
@@ -88,10 +88,17 @@ def addsolver(mdao, parent_name, solver_name, kwargs, varoptions):
     parent = mdao[parent_name]
     child = mdao[solver_name] = parent.add_subsystem(solver_name, 
         om.Group(), promotes=['*'])
-    child.linear_solver = om.DirectSolver()
-    nlbgs = child.nonlinear_solver = om.NewtonSolver(solve_subsystems=True)
+    solvertype = kwargs.pop('solver', 'N')
+    if solvertype == 'N':
+        child.linear_solver = om.DirectSolver()
+        solver = om.NewtonSolver(solve_subsystems=True)
+    elif solvertype == 'GS':
+        solver = om.NonlinearBlockGS()
+    elif solvertype == 'J':
+        solver = om.NonlinearBlockJac()
     for key,var in kwargs.items():
-        nlbgs.options[key] = var
+        solver.options[key] = var
+    child.nonlinear_solver = solver
 
 def addimpcomp(mdao, parent_name, component_name, impl_components):
     parent = mdao[parent_name]

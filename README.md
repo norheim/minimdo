@@ -2,7 +2,7 @@
 Toolkit for formulating conceptual design equations, changing between declarative and input/output formulations and solve the resulting system of equations.
 
 # Minimal example
-This is minimal code for running the Sellar problem 
+This is minimal code for running the Sellar problem (https://openmdao.org/newdocs/versions/latest/basic_user_guide/multidisciplinary_optimization/sellar_opt.html#)
 ```python
 z1,z2,x,y2 = Var('z1'), Var('z2'), Var('x'), Var('y2')
 

@@ -29,7 +29,8 @@ def implargs_mdao(functype, compids, designvars, parentid, complookup, namefromi
         comp = complookup(compid)
         inputs = namefromid(comp.inputs, VAR, isiter=True)
         output = namefromid(designvars[idx], VAR)
-        impl_comps.append([inputs, (output,), comp.evaldict, comp.graddict, 1.0])
+        copiedcomp = Component(comp.function, inputs, (None,), comp.component, comp.indims, comp.outdims)
+        impl_comps.append([inputs, (output,), copiedcomp.evaldict, copiedcomp.graddict, 1.0])
     return (functype, parentname, compname, impl_comps)
 
 def explargs_mdao(functype, compid, parentid, complookup, namefromid):
@@ -37,7 +38,8 @@ def explargs_mdao(functype, compid, parentid, complookup, namefromid):
     parentname = namefromid(parentid, SOLVER)
     comp = complookup(compid)
     inputs, outputs = namefromid(comp.inputs, VAR, isiter=True), namefromid(comp.outputs, VAR, isiter=True)
-    return (functype, parentname, compname, inputs, outputs)
+    copiedcomp = Component(comp.function, inputs, outputs, comp.component, comp.indims, comp.outdims)
+    return (functype, parentname, compname, inputs, outputs, copiedcomp.evaldict, copiedcomp.graddict)
 
 def optfuncargs_mdao(functype, compid, parentid, complookup, namefromid):
     # need to define component name
