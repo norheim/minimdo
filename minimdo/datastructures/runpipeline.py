@@ -1,10 +1,10 @@
-from graphutils import flat_graph_formulation, solver_children, root_solver, Node, SOLVER, COMP
-from execution import generate_components_and_residuals
-from graphutils import namefromid
-from operators import sort_scc, reorder_merge_solve
-from workflow import get_f, order_from_tree, default_solver_options, mdao_workflow, implicit_comp_name
-from workflow_mdao import mdao_workflow_with_args
-from assembly import build_archi
+from datastructures.graphutils import flat_graph_formulation, solver_children, root_solver, Node, SOLVER, COMP
+from datastructures.execution import generate_components_and_residuals
+from datastructures.graphutils import namefromid
+from datastructures.operators import sort_scc, reorder_merge_solve
+from datastructures.workflow import get_f, order_from_tree, default_solver_options, mdao_workflow, implicit_comp_name
+from datastructures.workflow_mdao import mdao_workflow_with_args
+from datastructures.assembly import build_archi
 from executeformulations import perturb_inputs, run_and_save_archi
 import numpy as np
 

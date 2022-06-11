@@ -1,8 +1,8 @@
 from inputresolver import reassigneq
-from execution import Component
+from datastructures.execution import Component
 import sympy as sp
 from collections import OrderedDict
-from graphutils import all_variables, Node, VAR
+from datastructures.graphutils import all_variables, Node, VAR
 from compute import Var
 from randompoly import random_bijective_polynomial
 from testproblems import generate_random_prob

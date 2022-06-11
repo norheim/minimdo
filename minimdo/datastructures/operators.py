@@ -1,6 +1,6 @@
-from graphutils import solver_children
+from datastructures.graphutils import solver_children
 from collections import OrderedDict
-from graphutils import COMP, SOLVER
+from datastructures.graphutils import COMP, SOLVER
 from itertools import chain
 import networkx as nx
 

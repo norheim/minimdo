@@ -1,4 +1,5 @@
 from typing import Reversible
+import re
 import sympy as sp
 from sympy.core.cache import clear_cache
 import numpy as np
@@ -19,18 +20,44 @@ OPT = NodeTypes.OPT
 
 def args_in_order(name_dict, names):
     return [name_dict[in_var] for in_var in names if in_var in name_dict]
-    
+
+# The function will work for sympy symbols or just plain strings
+def get_latex(symbol_or_string):
+    return symbol_or_string._latex() if symbol_or_string else r'\mathrm{{{}}}'.format(symbol_or_string)
+
+def get_assumed_string(assumed):
+    return (r'{}={}'.format(get_latex(key),val) for key,val in assumed.items())
+
+def remove_frac_from_latex(latexstr):
+    return re.sub(r'\\frac{(.*)}{(.*)}', r'\1/\2', latexstr)
 class Var(sp.core.Symbol):
     def __new__(cls, name, value=None, unit=None, always_input=False, varid=None):
-        clear_cache()  # sympys built in cache can cause unexpected bugs
+        #clear_cache()  # sympys built in cache can cause unexpected bugs
         out = super().__new__(cls, name) #positive=positive)
         out.always_input = always_input
         out.varval = value
         out.varunit = ureg(unit) if unit else ureg('')
         out.forceunit = False
         out.varid = varid if varid != None else name
+        out.assumed = dict() # sometimes to generate varval we need to assume values
+                             # for the function that computed this value 
         return out
-
+    
+    def _latex(self, printer=None):
+        if self.varval:
+            assumed = ''
+            if self.assumed:
+                assumed = '\ ({})'.format(','.join(get_assumed_string(self.assumed)))
+            if self.varunit.dimensionless:
+                varstring = self.varval
+            else:
+                quantity = self.varval*self.varunit
+                varstring = '{:L~}'.format(quantity)
+                # remove frac's for more compact notation
+                varstring = remove_frac_from_latex(varstring)
+            return '{}{}'.format(varstring, assumed)
+        else:
+            return self.name
 class Par(Var):
     _ids = count(0)
     def __new__(self, *args, **kwargs):

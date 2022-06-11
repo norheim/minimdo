@@ -1,9 +1,11 @@
-from graphutils import merge_edges
+from datastructures.graphutils import merge_edges
 import numpy as np
-import autograd.numpy as anp
+#import autograd.numpy as anp
+import jax.numpy as anp
 import sympy as sp
-from autograd import grad, jacobian
-from unitutils import fx_with_units
+#from autograd import grad, jacobian
+from jax import grad, jacobian
+from datastructures.unitutils import fx_with_units
 from compute import ureg
 
 # The following class emulates being a dictionary for sympys lambdify to work
@@ -17,13 +19,13 @@ def grad_key_hide_none(outvr,invr):
     return (outvr,invr) if outvr else invr
 
 def generate_grad(fx, inputs, outputs, indims, outdims):
-    f = lambda x: anp.hstack(fx(*anp.split(x, anp.cumsum(indims[:-1]))))
+    f = lambda x: anp.hstack(fx(*anp.split(x, anp.cumsum(anp.asarray(indims[:-1])))))
     g = jacobian(f)
     def getgrad(*inargs):
         ins = np.hstack(inargs).astype(float)
         jout = g(ins)
         outsplit = zip(outputs, np.split(jout, outdims[:-1], axis=0))
-        insplit = lambda grads: zip(inputs, np.split(grads, np.cumsum(indims[:-1]), axis=1))
+        insplit = lambda grads: zip(inputs, np.split(grads, np.cumsum(anp.asarray(indims[:-1])), axis=1))
         return {grad_key_hide_none(outvr, invr):np.squeeze(grad) for outvr,grads in outsplit for invr,grad in insplit(grads)}
     return getgrad
 
@@ -56,6 +58,8 @@ def sympy_fx_inputs(expr):
     fx = sp.lambdify(inputs, expr, anp_math)
     return fx, inputs, inpunitsflat
 
+def sympy_fx_with_units():
+    pass
 class Component():
     def __init__(self, fx, inputs=None, outputs=None, component=None, indims=None, outdims=None, fxdisp=None, arg_mapping=None):
         #assert len(set(inputs).intersection(outputs))==0
@@ -80,7 +84,7 @@ class Component():
 
     @classmethod
     def from_lambda(cls, lfx, **kwargs):
-        inputs = inputs if inputs else lfx.__code__.co_varnames
+        inputs = inputs if kwargs.pop('inputs', False) else lfx.__code__.co_varnames
         return cls(lfx, inputs, **kwargs)
 
     @classmethod
@@ -90,7 +94,8 @@ class Component():
         if tovar and not isinstance(type(expr), sp.core.function.UndefinedFunction):# and hasattr(expr, 'dimensionality'): 
             # this second conditions can be dangerous but need it to fix something
             outunitsflat = (tovar.varunit,)
-            fx = fx_with_units(fx, inpunitsflat, outunitsflat) 
+            unitoverride = tovar.forceunit
+            fx = fx_with_units(fx, inpunitsflat, outunitsflat, unitoverride) 
         input_names = tuple(inp.varid for inp in inputs)
         return cls(fx, input_names, output_names, component, fxdisp=expr, arg_mapping=arg_mapping)
 

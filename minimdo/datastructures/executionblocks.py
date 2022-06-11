@@ -1,5 +1,5 @@
 import openmdao.api as om
-from workflow import OPT, OBJ, NEQ, EQ, SOLVE, IMPL, EXPL
+from datastructures.workflow import OPT, OBJ, NEQ, EQ, SOLVE, IMPL, EXPL
 class Impcomp(om.ImplicitComponent):
     def initialize(self):
         self.options.declare('components')
@@ -9,12 +9,12 @@ class Impcomp(om.ImplicitComponent):
         forbidden_input = {output_name[0] for _, output_name, _, _, _ in components} # variables have to be strictly separated into inputs and outputs so if there is any coupling between multiple components(inputs in one, outputs in the other) they cannot be classified as input
         for input_names, output_name, _, _, guess_vars in components:
             output_name = output_name[0]
-            self.add_output(output_name)
+            self.add_output(output_name, val=guess_vars) # this is what we are solving for
             for input_name in input_names:
                 # make sure not to add the same input twice
                 if input_name not in forbidden_input:
                     forbidden_input.add(input_name) 
-                    self.add_input(input_name, val=guess_vars)
+                    self.add_input(input_name)
             self.declare_partials(output_name, input_names)
 
     def apply_nonlinear(self, inputs, outputs, residuals):

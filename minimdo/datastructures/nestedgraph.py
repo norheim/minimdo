@@ -1,7 +1,7 @@
 from collections import defaultdict
 from telnetlib import GA
-from graphutils import flat_graph_formulation, solver_children, Node, COMP, SOLVER, VAR, root_solver, all_components, sources, edges_to_Ein_Eout
-from mergegraph import merge_graph, split_graph
+from datastructures.graphutils import flat_graph_formulation, solver_children, Node, COMP, SOLVER, VAR, root_solver, all_components, sources, edges_to_Ein_Eout
+from datastructures.mergegraph import merge_graph, split_graph
 
 def level_order_tree(tree, root=1):
     level_order = [root]

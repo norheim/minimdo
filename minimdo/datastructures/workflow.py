@@ -1,7 +1,7 @@
 from itertools import chain
 from enum import Enum
 from collections import OrderedDict
-from graphutils import merge_edges, solver_children, end_components, Node, SOLVER, VAR, COMP, all_solvers, path
+from datastructures.graphutils import merge_edges, solver_children, end_components, Node, SOLVER, VAR, COMP, all_solvers, path
 from utils import normalize_name
 
 NodeTypesExtended = Enum('NodeTypesExtended', 'ENDCOMP')
