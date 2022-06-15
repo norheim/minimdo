@@ -23,7 +23,7 @@ def args_in_order(name_dict, names):
 
 # The function will work for sympy symbols or just plain strings
 def get_latex(symbol_or_string):
-    return symbol_or_string.custom_latex_repr() if symbol_or_string else r'\mathrm{{{}}}'.format(symbol_or_string)
+    return symbol_or_string if symbol_or_string else r'\mathrm{{{}}}'.format(symbol_or_string)
 
 def get_assumed_string(assumed):
     return (r'{}={}'.format(get_latex(key),val) for key,val in assumed.items())

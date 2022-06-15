@@ -10,9 +10,10 @@ from datastructures.unitutils import fx_with_units
 import numpy as np
 
 class SolverRef():
-    def __init__(self, idx, modelref):
+    def __init__(self, idx, modelref, name=None):
         self.model = modelref
         self.idx = idx
+        self.name = name
 class Model():
     def __init__(self, solver=None, nametyperepr=None):
         solvers_options = {1: {"type":OPT}} if solver==OPT else {}
@@ -37,11 +38,12 @@ class Model():
         edges, tree = self.generate_formulation()
         return nestedform_to_mdao(edges, tree, self.components, self.solvers_options, self.comp_options, self.var_options, self. nametyperepr, mdf)
 
+#TODO: this overlaps significantly with Component.fromsympy, consider merging
 def var_from_expr(name, expr, unit=None, forceunit=False):
     newvar = Var(name, unit=unit)
     newvar.forceunit=forceunit # TODO: HACK for sympy function
     if not forceunit:
-        fx, inputs, inpunitsflat = sympy_fx_inputs(expr)
+        fx, inputs, inpunitsflat = sympy_fx_inputs(expr, "numpy")
         rhs_unit = get_unit(fx, inpunitsflat)[0] #get_unit returns a vector output depending on fx
         if unit != None:
             assert ureg(unit).dimensionality == rhs_unit.dimensionality
@@ -63,7 +65,7 @@ def calculateval(invars, fx):
         if var.varval is not None:
             varvals += (var.varval,)
             if var.assumed:
-                assumed.update(var.assumed)
+                assumed[var] = var.varval
         else:
             assumed[var] = defaultvarval
             varvals += (defaultvarval,)
@@ -115,7 +117,7 @@ def addf(solver, right, name=None):
     model.Ftree[comp_idx] = solver.idx
     return comp_idx
 
-def addsolver(solver, comps=None, solvefor=None):
+def addsolver(solver, comps=None, solvefor=None, name=None):
     comps = comps if comps else []
     solvefor = solvefor if solvefor else []
     model = solver.model
@@ -125,7 +127,7 @@ def addsolver(solver, comps=None, solvefor=None):
         model.Ftree[elt] = next_solver_idx
     for elt in solvefor:
         model.Vtree[elt] = next_solver_idx
-    return SolverRef(next_solver_idx, model)
+    return SolverRef(next_solver_idx, model, name)
 
 def setsolvefor(solver, solvefor, varoptions=None):
     model = solver.model

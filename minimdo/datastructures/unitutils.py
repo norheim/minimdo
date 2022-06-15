@@ -1,7 +1,8 @@
 import sympy as sp
 import numpy as np
 from compute import Var, ureg
-import jax.numpy as anp
+#import jax.numpy as anp
+import autograd.numpy as anp
 
 # The following class is a very hacky class that is used further down to recover the unit associated with a specific function. It overrides all standard operators in python
 class MockFloat(float):
@@ -102,12 +103,13 @@ def executable_with_conversion(convert, factors, fx):
         return flatten_list(anp.array(fx(*(convert*anp.array(args).flatten())))/anp.asarray(factors))
     return scaled_fx
 
-def fx_with_units(fx, inunitsflat, outunitsflat, overrideoutunits=False):
+def fx_with_units(fx, inunitsflat, outunitsflat, overrideoutunits=False, fxforunits=None):
     if overrideoutunits:
         # we prevent conversion of output from happening
         outunitpairs = tuple((outunit, outunit) for outunit in outunitsflat)
     else:
-        expr_units = get_unit(fx, inunitsflat)
+        fxforunits = fxforunits if fxforunits is not None else fx
+        expr_units = get_unit(fxforunits, inunitsflat)
         outunitpairs = tuple((outunit, outunitsflat[idx]) for idx, outunit in enumerate(expr_units))
     convert, factors = unit_conversion_factors(outunitpairs, inunitsflat)
     fx_scaled = executable_with_conversion(convert, factors, fx)

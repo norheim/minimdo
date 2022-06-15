@@ -1,19 +1,23 @@
 from datastructures.graphutils import merge_edges
 import numpy as np
-#import autograd.numpy as anp
-import jax.numpy as anp
+import autograd.numpy as anp
+#import jax.numpy as anp
 import sympy as sp
-#from autograd import grad, jacobian
-from jax import grad, jacobian
+from autograd import jacobian
+#from jax import jacobian
 from datastructures.unitutils import fx_with_units
 from compute import ureg
 
+#import jax
+#jax.config.update('jax_platform_name', 'cpu')
+
 # The following class emulates being a dictionary for sympys lambdify to work
 # with autograd
-math_functions = ['cos', 'sin', 'tan', 'arccos', 'arcsin', 'arctan', 'sqrt', 
-'exp', 'log', 'log2', 'log10']
+math_functions = ['cos', 'sin', 'tan', 'sqrt', 'exp', 'log', 'log2', 'log10']
+math_functions_dict = {'acos': 'arccos', 'asin':'arcsin', 'atan':'arctan'}
 
 anp_math = {elt: getattr(anp, elt) for elt in math_functions}
+anp_math.update({key:getattr(anp, val) for key,val in math_functions_dict.items()})
 
 def grad_key_hide_none(outvr,invr):
     return (outvr,invr) if outvr else invr
@@ -52,10 +56,11 @@ def partialfx(fx, input_names):
             return fx(*args)
     return wrapper
 
-def sympy_fx_inputs(expr):
+def sympy_fx_inputs(expr, library=None):
     inputs = list(expr.free_symbols)
     inpunitsflat = tuple(inpvar.varunit for inpvar in inputs)
-    fx = sp.lambdify(inputs, expr, anp_math)
+    modules = library if library is not None else anp_math
+    fx = sp.lambdify(inputs, expr, modules)
     return fx, inputs, inpunitsflat
 
 def sympy_fx_with_units():
@@ -95,7 +100,8 @@ class Component():
             # this second conditions can be dangerous but need it to fix something
             outunitsflat = (tovar.varunit,)
             unitoverride = tovar.forceunit
-            fx = fx_with_units(fx, inpunitsflat, outunitsflat, unitoverride) 
+            fxforunits = sp.lambdify(inputs, expr, "numpy")
+            fx = fx_with_units(fx, inpunitsflat, outunitsflat, unitoverride, fxforunits) 
         input_names = tuple(inp.varid for inp in inputs)
         return cls(fx, input_names, output_names, component, fxdisp=expr, arg_mapping=arg_mapping)
 
