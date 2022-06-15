@@ -4,6 +4,7 @@ from functools import partial
 from itertools import chain
 import networkx as nx
 from representations import draw
+from utils import normalize_name
 
 NodeTypes = Enum('NodeTypes', 'VAR COMP SOLVER')
 NodeTypes.__repr__ = lambda x: x.name
@@ -16,6 +17,20 @@ def namefromid(nodetyperepr):
             return tuple(nodetyperepr[elttype].format(eltid) for eltid in eltids)
         else:
             return nodetyperepr[elttype].format(eltids)
+    return nameingfunction
+
+def namevar(eltid, elttype, nodetyperepr):
+    if elttype == VAR:
+        return normalize_name(eltid)
+    else:
+        return nodetyperepr[elttype].format(eltid)
+
+def namefromsympy(nodetyperepr): 
+    def nameingfunction(eltids, elttype, isiter=False):
+        if isiter:
+            return tuple(namevar(eltid, elttype, nodetyperepr) for eltid in eltids)
+        else:
+            return namevar(eltids, elttype, nodetyperepr)
     return nameingfunction
 
 class Node():

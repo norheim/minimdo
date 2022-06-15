@@ -55,7 +55,7 @@ class Var(sp.core.Symbol):
                 varstring = '{:L~}'.format(quantity)
                 # remove frac's for more compact notation
                 varstring = remove_frac_from_latex(varstring)
-            return '{}{}'.format(varstring, assumed)
+            return '{}={}{}'.format(self.name, varstring, assumed)
         else:
             return self.name
 class Par(Var):

@@ -49,11 +49,11 @@ class MockQuantity(ureg.Quantity):
             return self
         else:
             return ureg.Quantity.__sub__(self, other)
-    def _add_sub(self, other, operator):
-        if not isinstance(other, ureg.Quantity):
-            return self
-        else:
-            return ureg.Quantity._add_sub(other, operator)
+    # def _add_sub(self, other, operator):
+    #     if not isinstance(other, ureg.Quantity):
+    #         return self
+    #     else:
+    #         return ureg.Quantity._add_sub(other, operator)
 
 def expression_conversion_unit(expr_unit, tounit=None):
     unit = tounit if tounit else ureg('')
