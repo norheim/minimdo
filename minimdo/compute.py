@@ -43,7 +43,7 @@ class Var(sp.core.Symbol):
                              # for the function that computed this value 
         return out
     
-    def _latex(self, printer=None):
+    def _repr_latex_(self):
         if self.varval:
             assumed = ''
             if self.assumed:
@@ -55,7 +55,7 @@ class Var(sp.core.Symbol):
                 varstring = '{:L~}'.format(quantity)
                 # remove frac's for more compact notation
                 varstring = remove_frac_from_latex(varstring)
-            return '{}={}{}'.format(self.name, varstring, assumed)
+            return '${}={}{}$'.format(self.name, varstring, assumed)
         else:
             return self.name
 class Par(Var):
