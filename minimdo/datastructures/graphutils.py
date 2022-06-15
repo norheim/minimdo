@@ -21,7 +21,7 @@ def namefromid(nodetyperepr):
 
 def namevar(eltid, elttype, nodetyperepr):
     if elttype == VAR:
-        return normalize_name(eltid)
+        return normalize_name(eltid, keep_underscore=True)
     else:
         return nodetyperepr[elttype].format(eltid)
 
