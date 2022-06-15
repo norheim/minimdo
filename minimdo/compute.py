@@ -23,7 +23,7 @@ def args_in_order(name_dict, names):
 
 # The function will work for sympy symbols or just plain strings
 def get_latex(symbol_or_string):
-    return symbol_or_string._latex() if symbol_or_string else r'\mathrm{{{}}}'.format(symbol_or_string)
+    return symbol_or_string.custom_latex_repr() if symbol_or_string else r'\mathrm{{{}}}'.format(symbol_or_string)
 
 def get_assumed_string(assumed):
     return (r'{}={}'.format(get_latex(key),val) for key,val in assumed.items())
@@ -43,7 +43,7 @@ class Var(sp.core.Symbol):
                              # for the function that computed this value 
         return out
     
-    def _repr_latex_(self):
+    def custom_latex_repr(self):
         if self.varval:
             assumed = ''
             if self.assumed:
@@ -55,9 +55,13 @@ class Var(sp.core.Symbol):
                 varstring = '{:L~}'.format(quantity)
                 # remove frac's for more compact notation
                 varstring = remove_frac_from_latex(varstring)
-            return '${}={}{}$'.format(self.name, varstring, assumed)
+            return '{}={}{}'.format(self.name, varstring, assumed)
         else:
             return self.name
+
+    def _repr_latex_(self):
+        return '${}$'.format(self.custom_latex_repr())
+
 class Par(Var):
     _ids = count(0)
     def __new__(self, *args, **kwargs):
