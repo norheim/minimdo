@@ -6,3 +6,5 @@ n2.html
 figures
 *.lp
 *.pyc
+*.png
+*.sqlite

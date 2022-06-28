@@ -1,8 +1,8 @@
 import sympy as sp
 import numpy as np
 from compute import Var, ureg
-#import jax.numpy as anp
-import autograd.numpy as anp
+import jax.numpy as anp
+#import autograd.numpy as anp
 
 # The following class is a very hacky class that is used further down to recover the unit associated with a specific function. It overrides all standard operators in python
 class MockFloat(float):

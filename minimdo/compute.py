@@ -25,11 +25,28 @@ def args_in_order(name_dict, names):
 def get_latex(symbol_or_string):
     return symbol_or_string if symbol_or_string else r'\mathrm{{{}}}'.format(symbol_or_string)
 
+def prettyprintval(x, latex=False, unit=None):
+    sci_expr = '{:.3e~P}' if not latex else '{:.3e~L}'
+    if (x>1e4 or x<1e-3) and x!=0:
+        return sci_expr.format(ureg.Quantity(x, unit))
+    else:
+        sci_expr = '\ {:L~}' if latex else ' {}'
+        unitstr = sci_expr.format(unit.units) if unit else ''
+        return r'{}{}'.format('{:.3f}'.format(x).rstrip('0').rstrip('.'),unitstr)
+
+def prettyprintunit(x):
+    if x.units != ureg('year'):
+        strformat = '{:P~}'
+        return strformat.format(x.units)
+    else:
+        return 'yr'
+
 def get_assumed_string(assumed):
-    return (r'{}={}'.format(get_latex(key),val) for key,val in assumed.items())
+    return (r'{}={}'.format(get_latex(key),prettyprintval(val,latex=True)) for key,val in assumed.items())
 
 def remove_frac_from_latex(latexstr):
     return re.sub(r'\\frac{(.*)}{(.*)}', r'\1/\2', latexstr)
+
 class Var(sp.core.Symbol):
     def __new__(cls, name, value=None, unit=None, always_input=False, varid=None):
         #clear_cache()  # sympys built in cache can cause unexpected bugs
@@ -44,18 +61,19 @@ class Var(sp.core.Symbol):
         return out
     
     def custom_latex_repr(self):
-        if self.varval:
+        if self.varval != None:
             assumed = ''
             if self.assumed:
-                assumed = '\ ({})'.format(','.join(get_assumed_string(self.assumed)))
+                assumed = '\ ({} )'.format(' ,'.join(get_assumed_string(self.assumed)))
             if self.varunit.dimensionless:
-                varstring = self.varval
+                varstr = prettyprintval(self.varval, latex=True)+' '
             else:
-                quantity = self.varval*self.varunit
-                varstring = '{:L~}'.format(quantity)
+                varstr = prettyprintval(self.varval, latex=True, unit=self.varunit)
                 # remove frac's for more compact notation
-                varstring = remove_frac_from_latex(varstring)
-            return '{}={}{}'.format(self.name, varstring, assumed)
+                varstr = remove_frac_from_latex(varstr)
+            # Need to synchronize the name of 'dummy' here and in api
+            namestr = '{}='.format(self.name) if self.name != 'dummy' else ''
+            return '{}{}{}'.format(namestr, varstr, assumed)
         else:
             return self.name
 

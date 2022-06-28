@@ -55,31 +55,49 @@ def default_solver_options(tree, solvers_options=None):
         solvers_options[solver]['designvars'] = tuple(solver_children(Vtree, solver))
     return solvers_options
 
-def handle_component(allendcomps, queue, component, parent, endcompqueue):
-    remainingallendcomps = len([elt for elt in solver_children(queue, parent) if elt in allendcomps])
-    lastendcomp = component in allendcomps and remainingallendcomps==0
-    if lastendcomp:
-            return (ENDCOMP, endcompqueue+[component], parent), []
-    elif component not in allendcomps: 
-           return (COMP, component, parent), endcompqueue
+def handle_component(allendcomps, queue, component, parent, endcompqueue, mergeendcomp=True):
+    remainingcomps = len([elt for elt in solver_children(queue, parent)])
+    lastchildcomp = remainingcomps==0
+    if lastchildcomp:
+        if mergeendcomp:
+            lastcomponent = [component] if component in allendcomps else []
+            endcomps_ids = endcompqueue+lastcomponent
+            if endcomps_ids:
+                endcomps = [(ENDCOMP, endcomps_ids, parent)]
+            else:
+                endcomps = []
+        else:
+            lastcomponent = [(ENDCOMP, component, parent)] if component in allendcomps else []
+            endcomps = [(ENDCOMP, comps, parent) for comps in endcompqueue]+lastcomponent
+        if component not in allendcomps:
+            return [(COMP, component, parent)] + endcomps, []
+        else:
+            return endcomps, []
+    if component not in allendcomps: 
+           return [(COMP, component, parent)], endcompqueue
     else:
         return None, endcompqueue+[component]
 
-def order_from_tree(Ftree, Stree, Eout):
+def order_from_tree(Ftree, Stree, Eout, includesolver=True, mergeendcomp=True):
     visited = set()
     sequence = []
-    queue = OrderedDict(Ftree)
+    queue = list(Ftree.items())
     allendcomps = end_components(Eout)
     endcompqueue = []
     while queue:
-        component, parent = queue.popitem(last=False)
+        component, parent = queue.pop(0)
         ancestors = path(Stree, parent, visited)
         reverse_ancestors = ancestors[::-1]
         visited = visited.union(reverse_ancestors)
-        sequence += [(SOLVER, solver, Stree.get(solver,None)) for solver in reverse_ancestors]
-        sequence_item, endcompqueue = handle_component(allendcomps, queue, component, parent, endcompqueue)
-        if sequence_item:
-            sequence.append(sequence_item)
+        if includesolver:
+            sequence += [(SOLVER, solver, Stree.get(solver,None)) for solver in reverse_ancestors]
+        all_children_comps = chain((component,), solver_children(dict(queue), parent))
+        for comp in all_children_comps:
+            if comp != component:
+                queue.remove((comp, parent))
+            sequence_items, endcompqueue = handle_component(allendcomps, dict(queue), comp, parent, endcompqueue, mergeendcomp)
+            if sequence_items:
+                sequence.extend(sequence_items)
     return sequence
 
 def mdao_workflow(sequence, solvers_options, comp_options=None, var_options=None):
@@ -89,7 +107,10 @@ def mdao_workflow(sequence, solvers_options, comp_options=None, var_options=None
         if elt_type == SOLVER:
             solver_options = solvers_options[content]
             solver_type = solver_options['type']
-            workflow.append((solver_type, content, parent, {key:val for key,val in solver_options.items() if key != 'type'}, var_options))
+            other_solver_options = {key:val for key,val in solver_options.items() if key != 'type'}
+            var_options_filtered = {key:var_options[key] for key in other_solver_options.get('designvars',[]) if key in var_options}
+            wf_line = (solver_type, content, parent, other_solver_options, var_options_filtered)
+            workflow.append(wf_line)
         elif elt_type == COMP:
             workflow.append((EXPL, content, parent))
         elif elt_type == ENDCOMP:

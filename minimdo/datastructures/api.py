@@ -15,7 +15,7 @@ class SolverRef():
         self.idx = idx
         self.name = name
 class Model():
-    def __init__(self, solver=None, nametyperepr=None):
+    def __init__(self, solver=None, nametyperepr=None, rootname=1):
         solvers_options = {1: {"type":OPT}} if solver==OPT else {}
         self.solvers_options = solvers_options
         self.nametyperepr = nametyperepr if nametyperepr is not None else {VAR: '{}', COMP: 'f{}', SOLVER: 's{}'}
@@ -25,7 +25,7 @@ class Model():
         self.Ftree = OrderedDict()
         self.Stree = dict()
         self.Vtree = dict()
-        self.root = SolverRef(1,self)
+        self.root = SolverRef(rootname, self, name=rootname)
         self.comp_by_var = dict()
         self.idmapping = {}
 
@@ -93,8 +93,8 @@ def adda(solver, left, right, *args, **kwargs):
         if isinstance(left, str):
             left = Var(left, unit=outunit)
         addvars(model, invars, left)
-        invars = tuple(str(var) for var in invars)
-        comp = Component(fx, invars, outvars, component=comp_idx)
+        invars_names = tuple(str(var) for var in invars)
+        comp = Component(fx, invars_names, outvars, component=comp_idx)
     else:
         if isinstance(left, str):
             left = var_from_expr(left, right, *args, **kwargs)
@@ -117,11 +117,11 @@ def addf(solver, right, name=None):
     model.Ftree[comp_idx] = solver.idx
     return comp_idx
 
-def addsolver(solver, comps=None, solvefor=None, name=None):
+def addsolver(solver, comps=None, solvefor=None, name=None, idbyname=False):
     comps = comps if comps else []
     solvefor = solvefor if solvefor else []
     model = solver.model
-    next_solver_idx = max(chain(model.Stree.keys(),[1]))+1
+    next_solver_idx = name if idbyname else max(chain(model.Stree.keys(),[1]))+1
     model.Stree[next_solver_idx] = solver.idx
     for elt in comps:
         model.Ftree[elt] = next_solver_idx

@@ -23,7 +23,8 @@ def build_typedgraph(edges, tree, nodetyperepr):
     Ftree, Stree, Vtree = tree
     graphs = dict()
     G_parent = flat_graph_formulation(*edges, nodetyperepr=nodetyperepr)
-    merge_order = level_order_tree(Stree)[::-1]
+    root_id = root_solver(tree)
+    merge_order = level_order_tree(Stree, root=root_id)[::-1]
     for solver_idx in merge_order:
         solve_vars = typed_solver_children(Vtree, solver_idx, VAR, nodetyperepr)
         component_nodes = typed_solver_children(Ftree, solver_idx, COMP, nodetyperepr)

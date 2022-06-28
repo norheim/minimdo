@@ -78,7 +78,8 @@ def addoptfunc(mdao, functype, parentname, compname, inputs, output, fx, gradfx)
     root = mdao[parentname]
     addexpcomp(mdao, parentname, compname, inputs, (output,), fx, gradfx)
     if functype in [NEQ, EQ]:
-        bnds = {'upper':0.} if NEQ else {'upper':0., 'lower':0.}
+        bnds = {'upper':0.} if functype==NEQ else {'upper':0., 'lower':0.}
+        print("bounds", bnds)
         root.add_constraint(output, **bnds)
     elif functype == OBJ :
         root.add_objective(output)

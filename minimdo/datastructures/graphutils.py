@@ -73,6 +73,9 @@ def all_edges(Ein, Eout, transform=None, filterto=None):
 def merge_edges(Ein, Rin):
     return {key: var+Rin.get(key, tuple()) for key,var in Ein.items()}
 
+def copy_dicts(dicts):
+    return tuple(d.copy() for d in dicts)
+
 def edges_to_Ein_Eout(edges):
     Ein, Eout, Rin = edges
     return merge_edges(Ein, Rin), Eout
