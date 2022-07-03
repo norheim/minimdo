@@ -19,7 +19,7 @@ def level_order_tree(tree, root=1):
 def typed_solver_children(tree, solver_idx, node_type, nodetyperepr):
     return {Node(comp, node_type, nodetyperepr) for comp in solver_children(tree, solver_idx)}
 
-def build_typedgraph(edges, tree, nodetyperepr):
+def build_typedgraph(edges, tree, nodetyperepr, exclude_unique_sources=True):
     Ftree, Stree, Vtree = tree
     graphs = dict()
     G_parent = flat_graph_formulation(*edges, nodetyperepr=nodetyperepr)
@@ -30,13 +30,14 @@ def build_typedgraph(edges, tree, nodetyperepr):
         component_nodes = typed_solver_children(Ftree, solver_idx, COMP, nodetyperepr)
         solver_nodes = typed_solver_children(Stree, solver_idx, SOLVER, nodetyperepr)
         merge_comps = component_nodes.union(solver_nodes)
-        G_parent, graphs[solver_idx] = merge_graph(G_parent, merge_comps, solve_vars, solver_idx, nodetyperepr)
+        G_parent, graphs[solver_idx] = merge_graph(G_parent, merge_comps, solve_vars, solver_idx, nodetyperepr, exclude_unique_sources)
     return graphs
 
 def root_sources(edges, trees):
     all_srcs = sources(*edges_to_Ein_Eout(edges))
+    root = root_solver(trees)
     _,_,Vtree = trees
-    srcs = all_srcs - Vtree.keys()
+    srcs = all_srcs - {var for var,solver in Vtree.items() if solver != root}
     # root = root_solver(tree)
     # g = build_typedgraph(edges, tree, nodetyperepr)
     # G = g[root]

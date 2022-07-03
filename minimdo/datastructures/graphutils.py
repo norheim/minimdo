@@ -167,3 +167,15 @@ def root_solver(tree):
     spath = path(Stree, next(iter(Ftree.values())))
     root = spath[-1] # last element
     return root
+
+# def rearrange_edges(edges, output_set):
+#     Ein, Eout, Rin = copy_dicts(edges)
+#     Ein_new, Eout_new, Rin_new = {}, {}, Rin
+#     for comp in Eout:
+#         outputvar = output_set.get(comp, None)
+#         reversedvar = None
+#         if outputvar is None and Eout[comp][0] is not None:
+#             reversedvar = Eout[comp]
+#             Rin_new[comp] = (reversedvar,)
+#         Eout_new[comp] = (outputvar,)
+#         Ein_new[comp] = tuple(varn for varn in chain(Ein[comp],Eout[comp]) if varn not in [outputvar, reversedvar])

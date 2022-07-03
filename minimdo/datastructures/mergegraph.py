@@ -18,12 +18,15 @@ def split_graph(G, typed_mergelts):
     mergegraph_Eout= dict(filter_comps(graph_Eout, typed_nonmergelts))
     return (subgraph_Ein, subgraph_Eout), (mergegraph_Ein, mergegraph_Eout)
 
-def subgraph_ins(subgraph, mergegraph):
+def subgraph_ins(subgraph, mergegraph, exclude_unique_sources=True):
     # Only source variables from the subgraph are candidates for inputs
     # Any intermediary or source variable in the graph is a candidate
     srcs_subgraph = sources(*subgraph)
-    graph_vars = all_variables(*mergegraph)
-    return srcs_subgraph.intersection(graph_vars)
+    if exclude_unique_sources:
+        graph_vars = all_variables(*mergegraph)
+        return srcs_subgraph.intersection(graph_vars)
+    else:
+        return srcs_subgraph
 
 def subgraph_outs(subgraph, mergegraph):
     # Both sinks and intermediary variables can be outputs:
@@ -34,8 +37,8 @@ def subgraph_outs(subgraph, mergegraph):
 def generate_edges(*graphs):
     return reduce(lambda x,y: x+y, (all_edges(Ein, Eout) for Ein, Eout in graphs))
 
-def merged_graph(subgraph, mergegraph, solver_idx, typed_solve_vars, nodetyperepr):
-    ins_from_graph = subgraph_ins(subgraph, mergegraph)
+def merged_graph(subgraph, mergegraph, solver_idx, typed_solve_vars, nodetyperepr=None, exclude_unique_sources=True):
+    ins_from_graph = subgraph_ins(subgraph, mergegraph,  exclude_unique_sources)
     outs_used_in_graph = subgraph_outs(subgraph, mergegraph)
     subgraph_node_ins = ins_from_graph-typed_solve_vars
     subgraph_node_outs = outs_used_in_graph.union(typed_solve_vars)
@@ -45,13 +48,13 @@ def merged_graph(subgraph, mergegraph, solver_idx, typed_solve_vars, nodetyperep
     edges = generate_edges(mergegraph, solver_Einout)
     return edges
 
-def merge_graph(G, typed_mergelts, typed_solve_vars, solver_idx=0, nodetyperepr=None):
+def merge_graph(G, typed_mergelts, typed_solve_vars, solver_idx=0, nodetyperepr=None, exclude_unique_sources=True):
     subgraph, mergegraph = split_graph(G, typed_mergelts)
     # Allow for any source except it if it an output from the parent graph
     allowable_solvevars = sources(*subgraph)-all_varnodes(mergegraph[1])
     assert all(var in allowable_solvevars for var in typed_solve_vars)
     subgraph_edges = all_edges(*subgraph)
     subgraph_G = nx.DiGraph(subgraph_edges)
-    mergedgraph_edges = merged_graph(subgraph, mergegraph, solver_idx, typed_solve_vars, nodetyperepr)
+    mergedgraph_edges = merged_graph(subgraph, mergegraph, solver_idx, typed_solve_vars, nodetyperepr, exclude_unique_sources)
     mergegraph_G = nx.DiGraph(mergedgraph_edges)
     return mergegraph_G, subgraph_G

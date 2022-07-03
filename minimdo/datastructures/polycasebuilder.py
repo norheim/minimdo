@@ -18,7 +18,7 @@ def directed_poly_executables(var_mapping, polynomials, output_set):
         left = output_set[idx]
         leftvar,_ = var_mapping[left]
         function = sp.simplify(reassigneq(None, eq, leftvar))
-        new_comp = Component.fromsympy(function, leftvar, component=idx)
+        new_comp = Component.fromsympy(function, leftvar, component=idx, arg_mapping=arg_mapping)
         new_components.append(new_comp)
     return new_components
 

@@ -27,7 +27,9 @@ def get_latex(symbol_or_string):
 
 def prettyprintval(x, latex=False, unit=None):
     sci_expr = '{:.3e~P}' if not latex else '{:.3e~L}'
-    if (x>1e4 or x<1e-3) and x!=0:
+    if x == None:
+        return None
+    elif (x>1e4 or x<1e-3) and x!=0:
         return sci_expr.format(ureg.Quantity(x, unit))
     else:
         sci_expr = '\ {:L~}' if latex else ' {}'

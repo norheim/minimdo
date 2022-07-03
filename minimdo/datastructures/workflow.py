@@ -3,6 +3,7 @@ from enum import Enum
 from collections import OrderedDict
 from datastructures.graphutils import merge_edges, solver_children, end_components, Node, SOLVER, VAR, COMP, all_solvers, path
 from utils import normalize_name
+from collections import defaultdict
 
 NodeTypesExtended = Enum('NodeTypesExtended', 'ENDCOMP')
 NodeTypesExtended.__repr__ = lambda x: x.name
@@ -79,25 +80,29 @@ def handle_component(allendcomps, queue, component, parent, endcompqueue, mergee
         return None, endcompqueue+[component]
 
 def order_from_tree(Ftree, Stree, Eout, includesolver=True, mergeendcomp=True):
-    visited = set()
+    endcomps = {key: None in var for key,var in Eout.items()}
+    visited_solvers = set()
     sequence = []
+    endcompqueue = defaultdict(list)
     queue = list(Ftree.items())
-    allendcomps = end_components(Eout)
-    endcompqueue = []
     while queue:
         component, parent = queue.pop(0)
-        ancestors = path(Stree, parent, visited)
+        ancestors = path(Stree, parent, visited_solvers)
         reverse_ancestors = ancestors[::-1]
-        visited = visited.union(reverse_ancestors)
+        visited_solvers = visited_solvers.union(reverse_ancestors)
         if includesolver:
             sequence += [(SOLVER, solver, Stree.get(solver,None)) for solver in reverse_ancestors]
-        all_children_comps = chain((component,), solver_children(dict(queue), parent))
-        for comp in all_children_comps:
-            if comp != component:
-                queue.remove((comp, parent))
-            sequence_items, endcompqueue = handle_component(allendcomps, dict(queue), comp, parent, endcompqueue, mergeendcomp)
-            if sequence_items:
-                sequence.extend(sequence_items)
+        if endcomps[component]:
+            endcompqueue[parent].append(component)
+        else:
+            sequence += [(COMP, component, parent)]
+        remainingcomps = len([elt for elt in solver_children(dict(queue), parent)])
+        lastchildcomp = remainingcomps==0
+        if lastchildcomp:
+            if mergeendcomp and endcompqueue:
+                sequence += [(ENDCOMP, endcompqueue[parent], parent)]
+            else:
+                sequence += [(ENDCOMP, endcomp, parent) for endcomp in endcompqueue[parent]]
     return sequence
 
 def mdao_workflow(sequence, solvers_options, comp_options=None, var_options=None):

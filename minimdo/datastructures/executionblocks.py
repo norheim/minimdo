@@ -52,7 +52,7 @@ class Expcomp(om.ExplicitComponent):
                 print(output_name, outputs[output_name])
 
     def compute_partials(self, inputs, partials, discrete_inputs=None):
-        _, _, _, gradfx = self.options['component']
+        _, output_names, _, gradfx = self.options['component']
         J = gradfx(inputs)
         for (outvar,invar),val in J.items():
             partials[outvar,invar] = val
@@ -70,7 +70,8 @@ def addoptimizer(mdao, parentname, solvername, design_vars, options, varoptions)
         else:
             root.add_design_var(desvar)
     prob.set_solver_print(level=1)
-    prob.driver = om.ScipyOptimizeDriver(**options)
+    optimizer = options.pop('driver', om.ScipyOptimizeDriver)
+    prob.driver = optimizer(**options)
     # prob.driver.options['optimizer'] = 'differential_evolution'
 
 
@@ -79,7 +80,6 @@ def addoptfunc(mdao, functype, parentname, compname, inputs, output, fx, gradfx)
     addexpcomp(mdao, parentname, compname, inputs, (output,), fx, gradfx)
     if functype in [NEQ, EQ]:
         bnds = {'upper':0.} if functype==NEQ else {'upper':0., 'lower':0.}
-        print("bounds", bnds)
         root.add_constraint(output, **bnds)
     elif functype == OBJ :
         root.add_objective(output)

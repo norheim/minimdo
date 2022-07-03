@@ -2,16 +2,26 @@ from compute import prettyprintval, prettyprintunit
 import pandas as pd
 from datastructures.graphutils import VAR
 
-def print_inputs(model, prob, mdao_in):
-    dvars = {elt:model.idmapping[elt] for elt in mdao_in if not model.idmapping[elt].always_input}
-    return pd.DataFrame([(key, 
-               prettyprintval(prob.get_val(key)[0]), 
-               prettyprintunit(var.varunit)) for key,var in dvars.items()])
+# Based on whatever is in varval, and not on running an MDAO model
+def print_values_static(model, varnames=None, get_value=None, display=True):
+    get_value = get_value if get_value else lambda var: var.varval
+    varobjs = model.comp_by_var.keys() if not varnames else (model.idmapping[varname] for varname in varnames)
+    df = pd.DataFrame([('$${}$$'.format(varobj), 
+               prettyprintval(get_value(varobj)), 
+               prettyprintunit(varobj.varunit)) for varobj in varobjs])
+    if display:
+        return df.style.hide(axis="columns").hide(axis="index")
+    else:
+        return df
 
-def print_outputs(model, prob, namingfunc):
-    return pd.DataFrame([(key, 
-               prettyprintval(prob.get_val(namingfunc(key.varid, VAR))[0]), 
-               prettyprintunit(key.varunit)) for key,var in model.comp_by_var.items()])
+def print_outputs(model, prob, namingfunc, varnames=None, display=True):
+    get_value = lambda var: prob.get_val(namingfunc(var.varid, VAR))[0]
+    return print_values_static(model, varnames, get_value, display)
+
+def print_inputs(model, prob, namingfunc, varnames, filterparam=True, display=True):
+    fltr = (lambda x: model.idmapping[x].always_input) if filterparam else lambda x: False
+    varnames_noparam = {elt for elt in varnames if not fltr(elt)}
+    return print_outputs(model, prob, namingfunc, varnames_noparam, display)
 
 def update_varval(model, prob, namingfunc):
     for key,var in model.comp_by_var.items():

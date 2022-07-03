@@ -38,6 +38,11 @@ class Model():
         edges, tree = self.generate_formulation()
         return nestedform_to_mdao(edges, tree, self.components, self.solvers_options, self.comp_options, self.var_options, self. nametyperepr, mdf)
 
+def edges_no_param(model, edges):
+    Ein, Eout, Rin = edges
+    Ein_noparam = {comp:tuple(var for var in compvars if not model.idmapping[var].always_input) for comp,compvars in Ein.items()}
+    return Ein_noparam, Eout, Rin
+
 #TODO: this overlaps significantly with Component.fromsympy, consider merging
 def var_from_expr(name, expr, unit=None, forceunit=False):
     newvar = Var(name, unit=unit)

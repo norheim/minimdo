@@ -2,7 +2,7 @@ from compute import Par, ureg
 from scipy import interpolate
 import numpy as np
 
-μ = Par('mu', 3.986005e14, 'm^3/s^2')
+μ = Par(r'\mu', 3.986005e14, 'm^3/s^2')
 R = Par('R', 6378, 'km')
 Q = Par('Q', 1367, 'W/m^2')
 k = Par('k', 1.38064852e-23, 'J/K')

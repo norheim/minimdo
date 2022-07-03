@@ -103,7 +103,24 @@ def assigncycleelim(model, where):
             g = model._G.subgraph(cycle)
             model.cbLazy(gp.quicksum(model._x[edge] if edge in model._x else model._x[edge[::-1]] for edge in g.edges())<=len(cycle)/2-1)
 
-def min_arc_set_assign(edges_left_right, leftset, rightset):
+def var_matched_cons(x, j, not_input=None):
+    if not_input == None:
+        not_input = []
+    if j in not_input:
+        return x.sum('*',j) == 1
+    else:
+        return x.sum('*',j) <= 1
+
+def var_matched_cons_reversed(x, i, not_input=None, not_output=None):
+    not_input = [] if not_input == None else not_input
+    not_output = [] if not_output == None else not_output
+    eqconstant = 1 if i not in not_output else 0
+    if i in not_input:
+        return x.sum(i, '*') == eqconstant
+    else:
+        return x.sum(i, '*') <= eqconstant
+
+def min_arc_set_assign(edges_left_right, leftset, rightset, not_input=None, not_output=None):
     G = nx.Graph(edges_left_right)
     m = gp.Model('cycles')
     m.setParam('OutputFlag', False )
@@ -112,7 +129,7 @@ def min_arc_set_assign(edges_left_right, leftset, rightset):
     # A variable node can have maximum one ouput edge (possibly of none)
     m.addConstrs((x.sum('*',i) <= 1 for i in rightset), name='equations')
     # An equation node shall have one output edge unless part of elimination set
-    m.addConstrs((x.sum(i,'*') <= 1 for i in leftset), name='variables')
+    m.addConstrs((var_matched_cons_reversed(x,i, not_input, not_output) for i in leftset), name='variables')
     m.setObjective(x.sum('*'), GRB.MAXIMIZE)
     m._rightset = rightset
     m._G = G
@@ -150,14 +167,6 @@ def subtourelim(model, where):
             g = model._G.subgraph(cycle)
             model.cbLazy(gp.quicksum(model._x[edge] if edge in model._x else model._x[edge[::-1]] for edge in g.edges())<=model._c)
 
-def var_matched_cons(x, j, not_input=None):
-    if not_input == None:
-        not_input = []
-    if j in not_input:
-        return x.sum('*',j) == 1
-    else:
-        return x.sum('*',j) <= 1
-
 def min_max_scc(edges, vrs, eqns):
     G = nx.Graph(edges)
     # make sure edges are in the right order
@@ -178,3 +187,50 @@ def min_max_scc(edges, vrs, eqns):
     m.optimize(subtourelim)
     cycles, D = recoversol(m.getAttr('x', x), x, edges)
     return max([len(cycle)/2 for cycle in cycles]+[0]), m.getAttr('x', x), m
+
+def get_scc(xval, xref, rightset):
+    edges_left_right = xref.keys()
+    selected = tuple((right, left) for left, right in edges_left_right if xval[left, right] > 0.5)
+    D = nx.DiGraph(dir_graph(edges_left_right, rightset, selected))
+    S = nx.strongly_connected_components(D)
+    scc = [elt for elt in S if len(elt)>1]
+    return scc, D
+
+# def assignminscc(model, where):
+#     if where == GRB.Callback.MIPSOL:
+#         # make a list of edges selected in the solution
+#         x_sol = model.cbGetSolution(model._x)
+#         allscc, _ = get_scc(x_sol, model._x, model._rightset)
+#         print(allscc)
+#         for idx, scc in enumerate(allscc):
+#             g = model._G.subgraph(scc)
+#             model.cbLazy(gp.quicksum(model._x[edge] if edge in model._x else model._x[edge[::-1]] for edge in g.edges())<=model._c)
+
+def assignminscc2(model, where):
+    if where == GRB.Callback.MIPSOL:
+        # make a list of edges selected in the solution
+        x_sol = model.cbGetSolution(model._x)
+        cycles = assign_get_cycles_heuristic2(x_sol, model._x, model._rightset)
+        for idx, cycle in enumerate(cycles):
+            g = model._G.subgraph(cycle)
+            model.cbLazy(gp.quicksum(model._x[edge] if edge in model._x else model._x[edge[::-1]] for edge in g.edges())<=model._c/2-1)
+
+def min_max_scc2(edges_left_right, leftset, rightset, not_input=None, not_output=None):
+    G = nx.Graph(edges_left_right)
+    m = gp.Model('cycles')
+    m.setParam('OutputFlag', False )
+    m.setParam('TimeLimit', 10)
+    x = m.addVars(edges_left_right, name="assign", vtype=GRB.BINARY)
+    c = m.addVar(lb=0.0)
+    # A variable node can have maximum one ouput edge (possibly of none)
+    m.addConstrs((x.sum('*',i) == 1 for i in rightset), name='equations') #needs to be equality
+    # An equation node shall have one output edge unless part of elimination set
+    m.addConstrs((var_matched_cons_reversed(x,i, not_input, not_output) for i in leftset), name='variables')
+    m.setObjective(c, GRB.MINIMIZE)
+    m._rightset = rightset
+    m._G = G
+    m._x = x
+    m._c = c
+    m.Params.lazyConstraints = 1
+    m.optimize(assignminscc2)
+    return m.getAttr('x', x), m
