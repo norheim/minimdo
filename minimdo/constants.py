@@ -1,6 +1,7 @@
 from compute import Par, ureg
 from scipy import interpolate
 import numpy as np
+import jax.numpy as anp
 
 μ = Par(r'\mu', 3.986005e14, 'm^3/s^2')
 R = Par('R', 6378, 'km')
@@ -16,10 +17,15 @@ h_ρi = np.array([100, 150, 200, 250, 300, 350, 400, 450, 500,
                9.63e-15, 6.47e-15, 4.66e-15, 3.54e-15, 2.79e-15, 1.11e-15, 5.21e-16])
 Hi = np.array([5.9, 25.5, 37.5, 44.8, 50.3, 54.8, 58.2, 61.3, 64.5, 68.7, 74.8, 84.4, 
                99.3, 121, 151, 188, 226, 263, 296, 408, 516])*1e3
-ρinterp = interpolate.interp1d(np.log(h_ρi), np.log(ρi))
-Hinterp = interpolate.interp1d(np.log(h_ρi), np.log(Hi))
-ρ_int = lambda h: ρi[0] if h<=h_ρi[0] else np.exp(ρinterp(np.log(h))) if h <= 1500e3 else 5.21e-16
-H_int = lambda h: Hi[0] if h<=h_ρi[0] else np.exp(Hinterp(np.log(h))) if h <= 1500e3 else 516e3
+#ρinterp = interpolate.interp1d(np.log(h_ρi), np.log(ρi))
+#Hinterp = interpolate.interp1d(np.log(h_ρi), np.log(Hi))
+
+ρinterp = lambda x: anp.interp(x, anp.log(h_ρi), anp.log(ρi))
+Hinterp = lambda x: anp.interp(x, anp.log(h_ρi), anp.log(Hi))
+
+
+ρ_int = lambda h: ρi[0] if h<=h_ρi[0] else anp.exp(ρinterp(anp.log(h))) if h <= 1500e3 else 5.21e-16
+H_int = lambda h: Hi[0] if h<=h_ρi[0] else anp.exp(Hinterp(anp.log(h))) if h <= 1500e3 else 516e3
 
 # For balloon
 

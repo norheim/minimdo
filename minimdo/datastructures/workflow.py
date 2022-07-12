@@ -1,7 +1,7 @@
 from itertools import chain
 from enum import Enum
 from collections import OrderedDict
-from datastructures.graphutils import merge_edges, solver_children, end_components, Node, SOLVER, VAR, COMP, all_solvers, path
+from datastructures.graphutils import dfs_tree, merge_edges, solver_children, end_components, Node, SOLVER, VAR, COMP, all_solvers, path
 from utils import normalize_name
 from collections import defaultdict
 
@@ -56,34 +56,13 @@ def default_solver_options(tree, solvers_options=None):
         solvers_options[solver]['designvars'] = tuple(solver_children(Vtree, solver))
     return solvers_options
 
-def handle_component(allendcomps, queue, component, parent, endcompqueue, mergeendcomp=True):
-    remainingcomps = len([elt for elt in solver_children(queue, parent)])
-    lastchildcomp = remainingcomps==0
-    if lastchildcomp:
-        if mergeendcomp:
-            lastcomponent = [component] if component in allendcomps else []
-            endcomps_ids = endcompqueue+lastcomponent
-            if endcomps_ids:
-                endcomps = [(ENDCOMP, endcomps_ids, parent)]
-            else:
-                endcomps = []
-        else:
-            lastcomponent = [(ENDCOMP, component, parent)] if component in allendcomps else []
-            endcomps = [(ENDCOMP, comps, parent) for comps in endcompqueue]+lastcomponent
-        if component not in allendcomps:
-            return [(COMP, component, parent)] + endcomps, []
-        else:
-            return endcomps, []
-    if component not in allendcomps: 
-           return [(COMP, component, parent)], endcompqueue
-    else:
-        return None, endcompqueue+[component]
-
 def order_from_tree(Ftree, Stree, Eout, includesolver=True, mergeendcomp=True):
     endcomps = {key: None in var for key,var in Eout.items()}
     visited_solvers = set()
+    #allsolvers = all_solvers(Stree)
     sequence = []
     endcompqueue = defaultdict(list)
+    endsolvers = []
     queue = list(Ftree.items())
     while queue:
         component, parent = queue.pop(0)
@@ -99,10 +78,15 @@ def order_from_tree(Ftree, Stree, Eout, includesolver=True, mergeendcomp=True):
         remainingcomps = len([elt for elt in solver_children(dict(queue), parent)])
         lastchildcomp = remainingcomps==0
         if lastchildcomp:
-            if mergeendcomp and endcompqueue:
-                sequence += [(ENDCOMP, endcompqueue[parent], parent)]
-            else:
-                sequence += [(ENDCOMP, endcomp, parent) for endcomp in endcompqueue[parent]]
+            endsolvers += [parent]
+            remaining_child_solvers = [solver for solver in dfs_tree(Stree, parent) if solver not in visited_solvers]
+            if not remaining_child_solvers:
+                for solver in endsolvers:
+                    if mergeendcomp and endcompqueue.get(solver,False):
+                        sequence += [(ENDCOMP, endcompqueue[solver], solver)]
+                    else:
+                        sequence += [(ENDCOMP, endcomp, solver) for endcomp in endcompqueue[solver]]
+                endsolvers = []
     return sequence
 
 def mdao_workflow(sequence, solvers_options, comp_options=None, var_options=None):

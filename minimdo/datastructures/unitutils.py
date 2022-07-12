@@ -13,7 +13,7 @@ class MockFloat(float):
     def __add__(self, other):
         return self
     def __sub__(self, other):
-        return self
+        return -self
     def __mul__(self, other):
         return self
     def __truediv__(self, other):
@@ -75,8 +75,8 @@ def get_unit_multiplier(unit):
     return unit.to_base_units().magnitude
 
 def unit_conversion_factors(outunitpairs, inunits):
-    convert = anp.array([get_unit_multiplier(inp) for 
-            inp in inunits])
+    convert = [get_unit_multiplier(inp) for 
+            inp in inunits]
     factors = []
     for outunit, tounit in outunitpairs:
         conversion_unit = expression_conversion_unit(outunit, tounit)
@@ -99,8 +99,10 @@ def flatten_list(ls):
     return ls if np.isscalar(ls)==1 else list(ls)
 
 def executable_with_conversion(convert, factors, fx):
+    input_conversion = anp.array(convert)
+    output_conversion = anp.array(factors)
     def scaled_fx(*args):
-        return flatten_list(anp.array(fx(*(convert*anp.array(args).flatten())))/anp.asarray(factors))
+        return flatten_list(anp.array(fx(*(input_conversion*anp.array(args).flatten())))/output_conversion)
     return scaled_fx
 
 def fx_with_units(fx, inunitsflat, outunitsflat, overrideoutunits=False, fxforunits=None):

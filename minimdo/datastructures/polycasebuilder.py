@@ -3,6 +3,7 @@ from datastructures.execution import Component
 import sympy as sp
 from collections import OrderedDict
 from datastructures.graphutils import all_variables, Node, VAR
+from datastructures.operators import invert_edges
 from compute import Var
 from randompoly import random_bijective_polynomial
 from testproblems import generate_random_prob
@@ -27,21 +28,19 @@ def residual_poly_executables(var_mapping, polynomials):
     return [Component.fromsympy(function, component=component, arg_mapping=arg_mapping) for component,function in polynomials.items()]
 
 def eqv_to_edges_tree(eqv, output_set, n_eqs, offset=True):
-    eqv = {key:tuple(vr-n_eqs for vr in var) for key,var in eqv.items()} if offset else eqv
-    Ein = {key: tuple(vr for vr in var if vr !=output_set[key]) for key,var in eqv.items()}
-    Eout = {key: (var,) for key,var in output_set.items()}
-    Rin = dict()
+    if offset:
+        eqv = {key:tuple(vr-n_eqs for vr in var) for key,var in eqv.items()}
+        output_set = {key:outvar-n_eqs for key,outvar in output_set.items()}
+    edges = invert_edges(eqv, newout=output_set)
     Ftree=OrderedDict((key,1) for key in eqv.keys())
     Stree=dict()
     Vtree=dict()
-    edges = Ein, Eout, Rin
     tree = Ftree, Stree, Vtree
-    return edges, tree
+    return edges, tree, output_set
 
 def generate_random_polynomials(eqv, output_set, n_eqs, rng=None):
     rng = rng if rng else np.random.default_rng(12345)
-    output_set = {key:var-n_eqs for key,var in output_set.items()}
-    edges, tree= eqv_to_edges_tree(eqv, output_set, n_eqs)
+    edges, tree, output_set = eqv_to_edges_tree(eqv, output_set, n_eqs, offset=True)
     Ein, Eout, _ = edges
     all_vars = all_variables(Ein,Eout)
     var_mapping = {idx: (Var(str(Node(idx,VAR)), varid=idx), str(Node(idx,VAR))) for idx in all_vars}

@@ -1,11 +1,21 @@
 from datastructures.graphutils import solver_children
-from collections import OrderedDict
-from datastructures.graphutils import COMP, SOLVER
+from collections import OrderedDict, defaultdict
+from datastructures.graphutils import COMP, SOLVER, all_components
 from itertools import chain
 import networkx as nx
 
 def filter_solver_comps(x):
     return x.nodetype in [COMP, SOLVER]
+
+def invert_edges(Ein, Eout=None, newout=None):
+    all_comps = all_components(Ein)
+    Ein_new = defaultdict(tuple)
+    Eout_new = defaultdict(tuple)
+    for comp in all_comps:
+        outvar = newout.get(comp,None)
+        Ein_new[comp] = tuple(elt for elt in chain(Ein[comp], Eout[comp] if Eout else []) if elt != outvar)
+        Eout_new[comp] = (outvar,)
+    return dict(Ein_new), dict(Eout_new), {}
 
 def sort_scc(G, filterfx=None):
     filterfx = filterfx if filterfx else filter_solver_comps

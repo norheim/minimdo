@@ -1,7 +1,8 @@
 from networkx.algorithms.bipartite import random_graph as bipartite_random_graph
 import networkx as nx
 import numpy as np
-import copy
+from datastructures.graphutils import edges_E, flat_graph_formulation
+from datastructures.tearing import dir_graph
 
 def generate_random_prob(n_eqs, n_vars, seed=8, sparsity=1.0):
     n_nodes = n_eqs + n_vars
@@ -28,3 +29,25 @@ def generate_random_prob(n_eqs, n_vars, seed=8, sparsity=1.0):
     varinc = {elt: tuple(G[elt]) for elt in bip_varids}
     #allowed = copy.deepcopy(eqv)
     return eqv, varinc, M
+
+def random_problem_with_artifacts(m,n,seed,sparsity):
+    seed = int(seed) # required for the way we generate random problems
+    eq_incidence, var_incidence, outset = generate_random_prob(m, n, seed, sparsity)
+    edges_varonleft = edges_E(eq_incidence)
+    eqnidxs = eq_incidence.keys()
+    varidxs = var_incidence.keys()
+    D = nx.DiGraph(dir_graph(edges_varonleft, eqnidxs, outset.items()))
+    kwargs = {
+        'm': m,
+        'n':n,
+        'seed':seed,
+        'sparsity':sparsity,
+        'eq_incidence':eq_incidence,
+        'var_incidence':var_incidence,
+        'edges_varonleft':edges_varonleft,
+        'outset': outset,
+        'eqnidxs':eqnidxs,
+        'varidxs':varidxs,
+        'D':D
+    }
+    return kwargs

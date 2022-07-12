@@ -35,7 +35,8 @@ def transform_components(oldedges, newedges, components, arg_mapping):
     _, Eout = edges_to_Ein_Eout(oldedges)
     old_edges = flat_graph_formulation(*oldedges).to_undirected()
     new_edges = flat_graph_formulation(*newedges).to_undirected()
-    assert nx.is_isomorphic(old_edges, new_edges)
+    graph_isomorphic = {frozenset(elt) for elt in new_edges.edges()}=={frozenset(elt) for elt in old_edges.edges()}
+    assert graph_isomorphic
     # This is just to make sure that the new edges have an isomorphic undirected graph, which should be the case
     _, newEout = edges_to_Ein_Eout(newedges)
     new_components = []
@@ -45,6 +46,6 @@ def transform_components(oldedges, newedges, components, arg_mapping):
         new_out = var_from_mapping(arg_mapping, newEout, compid) 
         if old_out != new_out:
             new_function_expression = partial_inversion(comp.fxdisp, old_out, new_out)
-            newcomponent = Component.fromsympy(new_function_expression, new_out, component=compid, arg_mapping=arg_mapping)
+            newcomponent = Component.fromsympy(new_function_expression, new_out, component=compid)
             new_components.append(newcomponent)
     return new_components

@@ -1,6 +1,19 @@
 import networkx as nx
 import gurobipy as gp
 from gurobipy import GRB
+from itertools import islice
+
+def feedbacks(D, order=None):
+    visited = set()
+    guess = set()
+    feedback_components = set()
+    for node in order:
+        feedback_vars = {elt for elt in D.successors(node) if visited.intersection(D.successors(elt))}
+        if feedback_vars:
+            feedback_components.add(node)
+        guess = guess.union(feedback_vars)
+        visited.add(node)
+    return guess, feedback_components    
 
 def dir_graph(undir_edges, rightset, selected=None):
     selected = selected if selected !=None else []
@@ -11,6 +24,9 @@ def dir_graph(undir_edges, rightset, selected=None):
         else:
             yield (node1,node2) if node2 in rightset else (node2, node1)
 
+def limited_simple_cycles(D, limit=100):
+    return islice(nx.simple_cycles(D),limit)
+
 def get_cycles(yval, yref, X):
     # elimination set = nodes with 1s
     elimset = {i for i in yref.keys() if yval[i] > 0.5}
@@ -19,12 +35,19 @@ def get_cycles(yval, yref, X):
     cycles = [elt for elt in S if len(elt)>1]
     return cycles, elimset
 
+# Runs significantly slower
+def get_cycles2(yval, yref, X):
+    elimset = {i for i in yref.keys() if yval[i] > 0.5}
+    D = X.subgraph(X.nodes()-elimset)
+    cycles = limited_simple_cycles(D)
+    return cycles, None
+
 def sccelim(model, where):
     if where == GRB.Callback.MIPSOL:
         y_sol = model.cbGetSolution(model._y)
         cycles,_ = get_cycles(y_sol, model._y, model._X)
         for _, cycle in enumerate(cycles):
-            cycle_eqnodes = cycle.intersection(model._y.keys())
+            cycle_eqnodes = set(cycle).intersection(model._y.keys())
             model.cbLazy(gp.quicksum(model._y[node] for node in cycle_eqnodes)>=1)
 
 def min_arc_set(edges, dout, vrs, eqns):
@@ -41,7 +64,7 @@ def min_arc_set(edges, dout, vrs, eqns):
     m.Params.lazyConstraints = 1
     m.optimize(sccelim)
     cycles, elimset = get_cycles(m.getAttr('x', y), y, X)
-    return cycles, elimset
+    return cycles, elimset, m
 
 ## Changing inputs and outputs
 def heuristic_permute_tear(undir_edges, rightset):
@@ -63,6 +86,7 @@ def heuristic_permute_tear(undir_edges, rightset):
             G.remove_node(neighbor)
     return assignment, vertexelim
 
+
 def generate_all_scc2(dedges, velim):
     all_cycles = set() # make sure we don't run into repeated cycles
     for v, neighbors in velim:
@@ -70,7 +94,7 @@ def generate_all_scc2(dedges, velim):
         for u in neighbors:
             D.remove_edge(u,v)
             D.add_edge(v,u)
-            scycles = nx.simple_cycles(D)
+            scycles = limited_simple_cycles(D)
             for cycle in scycles:
                 all_cycles.add(tuple(cycle))
     return all_cycles
@@ -79,7 +103,7 @@ def assign_get_cycles_heuristic2(xval, xref, rightset):
     edges_left_right = xref.keys()
     selected = tuple((right, left) for left, right in edges_left_right if xval[left, right] > 0.5)
     D = nx.DiGraph(dir_graph(edges_left_right, rightset, selected))
-    S = nx.simple_cycles(D)
+    S = limited_simple_cycles(D)
     cycles_original = {tuple(elt) for elt in S}
     keep_edges = [(left,right) for (left,right) in edges_left_right if (right,left) not in selected]
     #print(selected)
@@ -124,7 +148,7 @@ def min_arc_set_assign(edges_left_right, leftset, rightset, not_input=None, not_
     G = nx.Graph(edges_left_right)
     m = gp.Model('cycles')
     m.setParam('OutputFlag', False )
-    m.setParam('TimeLimit', 3600)
+    m.setParam('TimeLimit', 100)
     x = m.addVars(edges_left_right, name="assign", vtype=GRB.BINARY)
     # A variable node can have maximum one ouput edge (possibly of none)
     m.addConstrs((x.sum('*',i) <= 1 for i in rightset), name='equations')
@@ -212,14 +236,15 @@ def assignminscc2(model, where):
         x_sol = model.cbGetSolution(model._x)
         cycles = assign_get_cycles_heuristic2(x_sol, model._x, model._rightset)
         for idx, cycle in enumerate(cycles):
+            comps_in_cycle = len(cycle)/2
             g = model._G.subgraph(cycle)
-            model.cbLazy(gp.quicksum(model._x[edge] if edge in model._x else model._x[edge[::-1]] for edge in g.edges())<=model._c/2-1)
+            model.cbLazy(gp.quicksum(model._x[edge] if edge in model._x else model._x[edge[::-1]] for edge in g.edges())<=comps_in_cycle-1+(model._c-1)/comps_in_cycle)
 
-def min_max_scc2(edges_left_right, leftset, rightset, not_input=None, not_output=None):
+def min_max_scc2(edges_left_right, leftset, rightset, not_input=None, not_output=None, timeout=10):
     G = nx.Graph(edges_left_right)
     m = gp.Model('cycles')
     m.setParam('OutputFlag', False )
-    m.setParam('TimeLimit', 10)
+    m.setParam('TimeLimit', timeout)
     x = m.addVars(edges_left_right, name="assign", vtype=GRB.BINARY)
     c = m.addVar(lb=0.0)
     # A variable node can have maximum one ouput edge (possibly of none)
@@ -233,4 +258,7 @@ def min_max_scc2(edges_left_right, leftset, rightset, not_input=None, not_output
     m._c = c
     m.Params.lazyConstraints = 1
     m.optimize(assignminscc2)
-    return m.getAttr('x', x), m
+    if m.Status == 9: # time limit
+        return False, m
+    else:
+        return m.getAttr('x', x), m

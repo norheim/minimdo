@@ -25,23 +25,25 @@ def args_in_order(name_dict, names):
 def get_latex(symbol_or_string):
     return symbol_or_string if symbol_or_string else r'\mathrm{{{}}}'.format(symbol_or_string)
 
-def prettyprintval(x, latex=False, unit=None):
-    sci_expr = '{:.3e~P}' if not latex else '{:.3e~L}'
+def prettyprintval(x, latex=False, unit=None, rounding=None):
+    rounding = rounding if rounding is not None else 3
+    sci_expr = '{'+':.{}e~P'.format(rounding)+'}' if not latex else '{'+':.{}e~L'.format(rounding)+'}'
+    nonsci_expr = '{'+':.{}f'.format(rounding)+'}'
     if x == None:
         return None
     elif (x>1e4 or x<1e-3) and x!=0:
-        return sci_expr.format(ureg.Quantity(x, unit))
+        x_removed_brackets = np.squeeze(x)[()]
+        return sci_expr.format(ureg.Quantity(x_removed_brackets, unit))
     else:
-        sci_expr = '\ {:L~}' if latex else ' {}'
-        unitstr = sci_expr.format(unit.units) if unit else ''
-        return r'{}{}'.format('{:.3f}'.format(x).rstrip('0').rstrip('.'),unitstr)
+        unit_expr = '\ {:L~}' if latex else ' {}'
+        unitstr = prettyprintunit(unit, unit_expr, latex) if unit else ''
+        return r'{}{}'.format(nonsci_expr.format(x).rstrip('0').rstrip('.'),unitstr)
 
-def prettyprintunit(x):
+def prettyprintunit(x, strformat='{:P~}', latex=False):
     if x.units != ureg('year'):
-        strformat = '{:P~}'
         return strformat.format(x.units)
     else:
-        return 'yr'
+        return r'\ \mathrm{yr}' if latex else 'yr'
 
 def get_assumed_string(assumed):
     return (r'{}={}'.format(get_latex(key),prettyprintval(val,latex=True)) for key,val in assumed.items())

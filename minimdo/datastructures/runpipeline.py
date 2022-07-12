@@ -1,4 +1,4 @@
-from datastructures.graphutils import flat_graph_formulation, solver_children, root_solver, Node, SOLVER, COMP
+from datastructures.graphutils import flat_graph_formulation, solver_children, root_solver, Node, SOLVER, COMP, namefromsympy
 from datastructures.execution import generate_components_and_residuals
 from datastructures.graphutils import namefromid
 from datastructures.operators import sort_scc, reorder_merge_solve
@@ -44,3 +44,20 @@ def nestedform_to_mdao(edges, tree, components, solvers_options, comp_options, v
     # optres_save.update({'count': impl_system.iter_count_apply}) 
     # optres_all.append(optres_save)
     # return optres, x0_in, prob
+
+def model_to_problem(model, formulation=None, components=None):
+    edges, tree = formulation if formulation else model.generate_formulation()
+    comp_options = model.comp_options
+    var_options = model.var_options
+    solvers_options = model.solvers_options
+    components = components if components else model.components
+    idmapping = model.idmapping # map from str to Var
+    nodetyperepr = model.nametyperepr
+    sequence = order_from_tree(tree[0], tree[1], edges[1])
+    solvers_options = default_solver_options(tree, solvers_options)
+    wf = mdao_workflow(sequence, solvers_options, comp_options, var_options)
+    lookup_f = get_f(components, edges)
+    namingfunc = namefromsympy(nodetyperepr)
+    wfmdao = mdao_workflow_with_args(wf, lookup_f, namingfunc)
+    prob, mdao_in, groups = build_archi(edges, tree, wfmdao, namingfunc, idmapping)
+    return prob, mdao_in, groups, namingfunc

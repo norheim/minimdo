@@ -8,3 +8,5 @@ figures
 *.pyc
 *.png
 *.sqlite
+*/datastructures/__pycache__/
+*.html

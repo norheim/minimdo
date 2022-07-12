@@ -27,13 +27,16 @@ def buildidpvars(mdao_in_ids, model, namingfunc, idmapping=None):
     model.add_subsystem('inp', comp, promotes=['*'])
     return 
 
-def build_archi(edges, tree, workflow, namingfunc, idmapping=None):
+def build_archi(edges, tree, workflow, namingfunc, idmapping=None, opt=True):
     # Build MDO model
     prob = om.Problem()
     mdo_model = prob.model
     groups = {'prob': prob, None:mdo_model}
     #root = root_solver(tree)
     mdao_in_ids = root_sources(edges, tree)
+    if not opt:
+        # if we are not optimizing, remove variables we are solving from inputs
+        mdao_in_ids -= set(tree[2].keys())
     buildidpvars(mdao_in_ids, mdo_model, namingfunc, idmapping)
     
     # This next step actually builds all the openMDAO components
