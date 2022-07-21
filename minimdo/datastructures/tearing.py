@@ -234,11 +234,17 @@ def assignminscc2(model, where):
     if where == GRB.Callback.MIPSOL:
         # make a list of edges selected in the solution
         x_sol = model.cbGetSolution(model._x)
-        cycles = assign_get_cycles_heuristic2(x_sol, model._x, model._rightset)
+        sol = outset_from_assignment(x_sol, model._x)
+        D = nx.DiGraph([(r,j) if (r,j) in sol else (j,r) for (r,j) in model._x])
+        #cycles = limited_simple_cycles(D)
+        S = nx.strongly_connected_components(D)
+        cycles = [elt for elt in S if len(elt)>1]
+        #cycles = assign_get_cycles_heuristic2(x_sol, model._x, model._rightset)
         for idx, cycle in enumerate(cycles):
             comps_in_cycle = len(cycle)/2
-            g = model._G.subgraph(cycle)
-            model.cbLazy(gp.quicksum(model._x[edge] if edge in model._x else model._x[edge[::-1]] for edge in g.edges())<=comps_in_cycle-1+(model._c-1)/comps_in_cycle)
+            g = model._G.subgraph(cycle) #g.edges()
+            #gedges = list(zip(cycle, cycle[1:]+[cycle[0]]))
+            model.cbLazy(gp.quicksum(model._x[edge] if edge in model._x else model._x[edge[::-1]] for edge in g.edges())<=comps_in_cycle-1+model._c/comps_in_cycle)
 
 def min_max_scc2(edges_left_right, leftset, rightset, not_input=None, not_output=None, timeout=10):
     G = nx.Graph(edges_left_right)

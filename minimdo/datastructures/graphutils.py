@@ -1,7 +1,8 @@
 from enum import Enum
 from collections import namedtuple, defaultdict
 from functools import partial
-from itertools import chain
+from itertools import chain, product
+from typing_extensions import OrderedDict
 import networkx as nx
 from representations import draw
 from utils import normalize_name
@@ -109,8 +110,12 @@ def solver_children(tree, solver_idx, solverlist=False):
     solver_idx = solver_idx if solverlist else [solver_idx]
     return (comp for comp,parent_solver in tree.items() if parent_solver in solver_idx)
 
-def flat_graph_formulation(Ein, Eout, Rin, nodetyperepr=None):
-    edges = all_edges(merge_edges(Ein,Rin), Eout, partial(transform_E, tfx=lambda x: Node(x, COMP, nodetyperepr), tvar=lambda x: Node(x, VAR, nodetyperepr)))
+def default_tree(idxs, solver_idx=1):
+    return OrderedDict((key,1) for key in idxs),{},{}
+
+def flat_graph_formulation(Ein, Eout, Rin, nodetyperepr=None, raw=False):
+    transform_fx = None if raw else partial(transform_E, tfx=lambda x: Node(x, COMP, nodetyperepr), tvar=lambda x: Node(x, VAR, nodetyperepr)) 
+    edges = all_edges(merge_edges(Ein,Rin), Eout, transform_fx)
     G = nx.DiGraph(edges)
     return G
 
@@ -167,6 +172,24 @@ def root_solver(tree):
     spath = path(Stree, next(iter(Ftree.values())))
     root = spath[-1] # last element
     return root
+
+def upstream(edges, comp):
+    # TODO: verify that it works with cyclic components?
+    Ein, Eout = edges_to_Ein_Eout(edges)
+    Eoutrev = defaultdict(list)
+    for c, vs in Eout.items():
+        for v in vs:
+            Eoutrev[v].append(c)
+    q = [(comp,True)]
+    v = []
+    while q:
+        c+=1
+        node, is_comp = q.pop()
+        E = Ein if is_comp else Eoutrev
+        children = [elt for elt in product(E[node], [not is_comp]) if elt not in v]
+        q += children
+        v += children
+    return set(key for key,val in v if not val) 
 
 # def rearrange_edges(edges, output_set):
 #     Ein, Eout, Rin = copy_dicts(edges)

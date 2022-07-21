@@ -52,13 +52,13 @@ def remove_frac_from_latex(latexstr):
     return re.sub(r'\\frac{(.*)}{(.*)}', r'\1/\2', latexstr)
 
 class Var(sp.core.Symbol):
-    def __new__(cls, name, value=None, unit=None, always_input=False, varid=None):
+    def __new__(cls, name, value=None, unit=None, always_input=False, varid=None, forceunit=False):
         #clear_cache()  # sympys built in cache can cause unexpected bugs
         out = super().__new__(cls, name) #positive=positive)
         out.always_input = always_input
         out.varval = value
         out.varunit = ureg(unit) if unit else ureg('')
-        out.forceunit = False
+        out.forceunit = forceunit
         out.varid = varid if varid != None else name
         out.assumed = dict() # sometimes to generate varval we need to assume values
                              # for the function that computed this value 

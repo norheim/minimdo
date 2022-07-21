@@ -3,7 +3,7 @@ from datastructures.execution import Component
 import sympy as sp
 from collections import OrderedDict
 from datastructures.graphutils import all_variables, Node, VAR
-from datastructures.operators import invert_edges
+from datastructures.operators import eqv_to_edges_tree
 from compute import Var
 from randompoly import random_bijective_polynomial
 from testproblems import generate_random_prob
@@ -27,16 +27,6 @@ def residual_poly_executables(var_mapping, polynomials):
     arg_mapping = get_arg_mapping(var_mapping)
     return [Component.fromsympy(function, component=component, arg_mapping=arg_mapping) for component,function in polynomials.items()]
 
-def eqv_to_edges_tree(eqv, output_set, n_eqs, offset=True):
-    if offset:
-        eqv = {key:tuple(vr-n_eqs for vr in var) for key,var in eqv.items()}
-        output_set = {key:outvar-n_eqs for key,outvar in output_set.items()}
-    edges = invert_edges(eqv, newout=output_set)
-    Ftree=OrderedDict((key,1) for key in eqv.keys())
-    Stree=dict()
-    Vtree=dict()
-    tree = Ftree, Stree, Vtree
-    return edges, tree, output_set
 
 def generate_random_polynomials(eqv, output_set, n_eqs, rng=None):
     rng = rng if rng else np.random.default_rng(12345)

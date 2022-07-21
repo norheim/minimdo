@@ -101,9 +101,10 @@ def plot_patches(ax, allpatches, patchwidth=2):
         rect = patches.Rectangle(ulcorner, col_size, row_size, linewidth=patchwidth, edgecolor='#737373', facecolor='none')
         ax.add_patch(rect)
 
-def render_incidence(edges, tree, namingfunc=None, displaysolver=True, **kwargs):
+def render_incidence(edges, tree, namingfunc=None, displaysolver=True, rawvariablename=False, **kwargs):
     if namingfunc is None:
-        nodetyperepr = {VAR: 'x_{{{}}}', COMP: 'f_{{{}}}', SOLVER: 's_{{{}}}'}
+        varnameformat = '{}' if rawvariablename else'x_{{{}}}'
+        nodetyperepr = {VAR: varnameformat, COMP: 'f_{{{}}}', SOLVER: 's_{{{}}}'}
         namingfunc = namefromid(nodetyperepr)
     patchwidth = kwargs.pop('patchwidth', 2)
     sequence, permutation, Ein, Eout, solver_iterator = incidence_artifacts(edges, tree, displaysolver)

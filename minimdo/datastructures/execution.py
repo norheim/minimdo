@@ -65,6 +65,10 @@ def sympy_fx_inputs(expr, library=None):
 
 def sympy_fx_with_units():
     pass
+
+def component_hash(algebraic_expr, outputs):
+    return hash(str(algebraic_expr))+hash(outputs)
+
 class Component():
     def __init__(self, fx, inputs=None, outputs=None, component=None, indims=None, outdims=None, fxdisp=None, arg_mapping=None):
         #assert len(set(inputs).intersection(outputs))==0
@@ -78,7 +82,16 @@ class Component():
         # TODO: this needs to be moved over to openMDAO code
         self.mapped_names = [arg_mapping[inp] for inp in inputs] if arg_mapping and inputs else self.inputs
         self.mapped_outputs = [arg_mapping.get(out,None) for out in self.outputs] if arg_mapping else self.outputs
-        self.gradient = generate_grad(fx, self.mapped_names, self.mapped_outputs, self.indims, self.outdims)
+        self.gradient = generate_grad(fx, self.mapped_names, self.mapped_outputs, self.indims, self.outdims) if fx else None
+    
+    def __eq__(self, other):
+        return hash(self) == hash(other)
+
+    def __hash__(self):
+        if self.fxdisp:
+            return component_hash(self.fxdisp, self.outputs)
+        else:
+            return object.__hash__(self)
 
     @classmethod
     def withunits(cls, fx, inputs, outputs, inunitmap, outunitmap, component=None):
