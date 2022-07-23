@@ -16,12 +16,12 @@ class SolverRef():
         self.name = name
 class Model():
     def __init__(self, solver=None, nametyperepr=None, rootname=1):
+        self.nametyperepr = nametyperepr if nametyperepr is not None else {VAR: '{}', COMP: 'f{}', SOLVER: 's{}'}
         solvers_options = {1: {"type":OPT}} if solver==OPT else {}
         self.solvers_options = solvers_options
-        self.nametyperepr = nametyperepr if nametyperepr is not None else {VAR: '{}', COMP: 'f{}', SOLVER: 's{}'}
-        self.components = []
         self.comp_options = {}
         self.var_options = {}
+        self.components = []
         self.Ftree = OrderedDict()
         self.Stree = dict()
         self.Vtree = dict()
@@ -176,13 +176,17 @@ def addeq(solver, right, name=None):
 def addobj(solver, right, name=None):
     addoptfunc(solver, right, name, OBJ)
 
-def merge(model, edges, tree):
-    medges,mtree = model.generate_formulation()
+def merge(formulation, edges, tree, copysolvers=True, copyvars=True):
+    medges,mtree = formulation
     new_edges = tuple(E | {key:val for key,val in mE.items() if key not in E} for mE,E in zip(medges, edges))
     Ftree,Vtree,Stree = copy_dicts(mtree)
     new_Ftree = OrderedDict(tree[0])
     for key,val in Ftree.items():
         if key not in edges[0]:
             new_Ftree[key] = val
-    new_treeSV = tuple(E | {key:val for key,val in mE.items() if key not in E} for mE,E in zip(mtree[1:3], tree[1:3]))
-    return new_edges, (new_Ftree, new_treeSV[0], new_treeSV[1]),  model.components
+    new_treeSV = ()
+    for i in range(2):
+        mE = mtree[i+1] if [copysolvers, copyvars][i] else {}
+        E = tree[i+1]
+        new_treeSV += (E | {key:val for key,val in mE.items() if key not in E},)
+    return new_edges, (new_Ftree, new_treeSV[0], new_treeSV[1])

@@ -1,5 +1,6 @@
 import openmdao.api as om
-from datastructures.workflow import OPT, OBJ, NEQ, EQ, SOLVE, IMPL, EXPL
+from datastructures.workflow import OBJ, NEQ, EQ
+from itertools import islice
 class Impcomp(om.ImplicitComponent):
     def initialize(self):
         self.options.declare('components')
@@ -65,7 +66,7 @@ def addoptimizer(mdao, parentname, solvername, design_vars, options, varoptions)
     #    om.Group(), promotes=['*'])
     for desvar in design_vars:
         if varoptions and desvar in varoptions:
-            lb, ub = varoptions[desvar]
+            lb, ub = islice(varoptions[desvar]+[None,None],2) # if varoptions its empty assigns a default value
             root.add_design_var(desvar, lb, ub)
         else:
             root.add_design_var(desvar)
