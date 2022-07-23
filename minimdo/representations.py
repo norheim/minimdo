@@ -133,11 +133,13 @@ def get_patches(root, sequence, solvefor):
 
 def plot_incidence_matrix(A, column_labels, row_labels, pad=None, **kwargs):
     fontsize = kwargs.get('fontsize', 16)
+    hideticks = kwargs.get('hideticks', False)
+    rotation = kwargs.get('rotation', 60)
     fig, ax = plt.subplots(figsize=kwargs.get('figsize',None))
     ax.pcolormesh(A, cmap='Greys', edgecolors='lightgray', linewidth=1, vmin=0, vmax=1.2)
     xtickidx, xtags = zip(*enumerate(column_labels))
     kwargs = {'ha': 'left'} if pad else dict()
-    plt.xticks(np.array(xtickidx)+0.5, xtags, rotation = 60, fontsize=fontsize, **kwargs)
+    plt.xticks(np.array(xtickidx)+0.5, xtags, rotation = rotation, fontsize=fontsize, **kwargs)
     ax.xaxis.tick_top()
     ytickidx, ytags = zip(*enumerate(row_labels))
     ytickargs = {'ha':'left'} if pad else dict()
@@ -147,6 +149,8 @@ def plot_incidence_matrix(A, column_labels, row_labels, pad=None, **kwargs):
     if pad:
         yax = ax.get_yaxis()
         yax.set_tick_params(pad=pad)
+    if hideticks:
+        ax.tick_params(axis=u'both', which=u'both',length=0)
     return fig, ax
 
 # def incidence_matrix(incstr, solvefor, sequence, permutation=None, diagonalgray=True):
