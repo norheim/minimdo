@@ -10,3 +10,4 @@ figures
 *.sqlite
 */datastructures/__pycache__/
 *.html
+*.out
