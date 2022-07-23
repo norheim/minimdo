@@ -21,16 +21,16 @@ model = Model(rootname='root')
 m = model.root
 
 # Geometry
-geometry = m#addsolver(m, name='geometry', idbyname=idbyname)
+geometry = addsolver(m, name='geometry', idbyname=idbyname)
 A_s = Var('A_{solar}', unit='m^2')
-alpha = Par(r'\alpha', 0.5)
+alpha = Par(r'\alpha', 0.05)
 adda(geometry, Df, (4*abs(A_s)/(pi*(1-alpha)))**0.5)
 d = adda(geometry, 'd', alpha*Df)
 
 # Hydrodynamics
-hydro = m#addsolver(m, name='hydro', idbyname=idbyname)
+hydro = addsolver(m, name='hydro', idbyname=idbyname)
 ## Local variable
-hf = Var('h_f', 0.5, 'm')
+hf = Var('h_f', 0.9*tf.varval, 'm')
 ## Local parameter
 g = Par('g', 9.81, 'm/s^2')
 Vd = adda(hydro, 'Vd', pi/4*(Df**2*hf+Ds**2*ts+Dd**2*td))
@@ -55,7 +55,7 @@ A33 = adda(hydro, 'A_{33}', 0.0525*pi*rhow*(Dd**3+Ds**3+Df**3))
 omega0 = adda(hydro, r'\omega_0', (C33/(A33+mtot))**1/2, unit='rad/s', forceunit=True)
 
 # Mass
-mass = m#addsolver(m, name='mass', idbyname=idbyname)
+mass = addsolver(m, name='mass', idbyname=idbyname)
 adda(mass, mtot, FW/g, 'kg')
 mbatt = Var('m_{batt}', unit='kg')
 mprop = Par('m_{prop}', 50, 'kg') # mass of propulsion
@@ -63,10 +63,10 @@ mcomms = Par('m_{comms}', 50, 'kg') # mass of comms system
 eta_solar = Par(r'\eta_{solar}', 10, 'kg/m^2')
 msolar = adda(mass, 'm_{solar}', eta_solar*A_s)
 mstruct = adda(mass, 'm_{struct}', mtot-mbatt-msolar-mcomms-mprop) 
-adda(mass, td, 4/pi*(mstruct-Df**2*tf*rho-Ds**2*ts*rho)/(Dd**2*rhoh))
+adda(mass, td, (4/pi*mstruct-Df**2*tf*rho-Ds**2*ts*rho)/(Dd**2*rhoh))
 
 # Propulsion
-prop = m#addsolver(m, name='prop', idbyname=idbyname)
+prop = addsolver(m, name='prop', idbyname=idbyname)
 S_wd = pi*((Dd/2)**2-(Ds/2)**2+(Dd/2)**2+2*(Dd/2)*td)
 S_ws = 2*pi*(Ds/2)*ts
 S_wf = pi*((Df/2)**2-(Ds/2)**2+2*(Df/2)*hf)
@@ -78,7 +78,7 @@ eta_m = Par(r'\eta_m', 0.75) # estimated, need to determine from motors?
 P_move = adda(prop, 'P_{move}', rhow*C_d*S_w*v**3/(2*eta_m), unit='W')
 
 # Communications
-comms = m#addsolver(m, name='comms', idbyname=idbyname)
+comms = addsolver(m, name='comms', idbyname=idbyname)
 db2dec = lambda x: 10**(x/10)
 dec2db = lambda x: 10*log(abs(x), 10)
 k = Par('k', 1.38065e-23, 'J/K')
@@ -98,7 +98,6 @@ h = Par('h', 780, 'km')
 Re = Par('Re', 6378, 'km')
 S = adda(comms, 'S', sqrt(h*(h+2*Re)), unit='km', forceunit=True)
 L_s = adda(comms, 'L_s', (Lambda/(4*pi*S))**2)
-
 R = Var('R', 10, 'Mbit/s') # 1 per microseconds
 T_s = Par('T_s', 135, 'K')
 L_a = Par('L_a', db2dec(-0.3))
@@ -108,7 +107,7 @@ EN = Var('EN', 10)
 Pcomms = adda(comms, 'P_{comms}', EN/(L_a*L_s*L_l*L_p*G_r*G_t)*(k*T_s*R), unit='W')
 
 # Power
-power = m#addsolver(m, name='power', idbyname=idbyname)
+power = addsolver(m, name='power', idbyname=idbyname)
 ## Energy budget
 # should t_move, t_comms, t_service and t_recharge add up to 24 hours?
 t_mission = Par('t_{mission}', 24, 'hr')
@@ -141,46 +140,11 @@ adda(power, A_s, P_recharge / (eta_s * phi_s * cos(theta_bar) * Ideg * (1-ddeg)*
 mu_batt = Par(r'\mu_{battery}', 200, 'W*hr/kg') # Lithium ion
 DOD = Par('DOD', 0.7)
 eta_batt = Par(r'\eta_{battery}', 0.85) # transmission efficiency
-#nu_batt = Par(r'\nu_{battery}', 450, 'kW*hr/(m**3)')
 N = Par('N', 1)
 C = adda(power, 'C', E_required/(DOD*N*eta_batt), unit='kW*hr')
-#V_batt = adda(power, 'V_{batt}', C/nu_batt, unit='m**3')
 m_batt_zero = Par('m_{batt_zero}', 5, 'kg')
 adda(power, mbatt, C/mu_batt + m_batt_zero, unit='kg') # was already defined in the beginning
+# Not needed parameters for now:
+# V_batt = adda(power, 'V_{batt}', C/nu_batt, unit='m**3')
+# nu_batt = Par(r'\nu_{battery}', 450, 'kW*hr/(m**3)')
 
-## DEBUG
-from datastructures.tearing import dir_graph, min_arc_set_assign
-from datastructures.graphutils import copy_dicts, all_variables, all_edges
-from datastructures.api import edges_no_param
-from datastructures.transformations import transform_components
-import networkx as nx
-from collections import OrderedDict
-from datastructures.operators import sort_scc
-from itertools import chain
-
-edges, tree = model.generate_formulation()
-edges_nopar = edges_no_param(model, edges) 
-edges_for_solving = copy_dicts(edges_nopar)
-eqns = list(edges_for_solving[1].keys())
-allvrs = all_variables(*edges_for_solving)
-graph_edges_minassign = all_edges(*edges_for_solving)
-edges_left_right = list(dir_graph(graph_edges_minassign, eqns, {}))
-min_assign_edges = edges_left_right
-not_input = [r'\omega_0', 'E_{move}', 'A_{33}', 'B_M', 'K_G', 'I', 'E_{recharge}']
-not_output = ['D_f', 'D_d', 't_s', 't_f', 'P_{comms}']
-xsol,m = min_arc_set_assign(min_assign_edges, allvrs, eqns, not_input, not_output)
-selected = tuple((right, left) for left, right in edges_left_right if (left,right) in min_assign_edges and xsol[left, right] > 0.5)
-# For topological sorting
-D = nx.DiGraph(dir_graph(edges_left_right, eqns, selected))
-minassign_order = sort_scc(D, lambda x: x in eqns)
-Ftree_mina = OrderedDict([(next(iter(comp)),'root') for comp in minassign_order])
-tree_mina = Ftree_mina, dict(), tree[2]
-Ein, Eout, Rin = edges
-Eout_minassign = {}
-Ein_minassign = {}
-for comp,varname in selected:
-    Eout_minassign[comp] = (varname,)
-    Ein_minassign[comp] = tuple(varn for varn in chain(Ein[comp],Eout[comp]) if varn!=varname)
-edges_minassign = (Ein_minassign, Eout_minassign, Rin)
-edges_minassign_nopar = edges_no_param(model, edges_minassign)
-newcomps = transform_components(edges, edges_minassign, model.components, model.idmapping)

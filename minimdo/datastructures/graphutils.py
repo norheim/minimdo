@@ -191,6 +191,14 @@ def upstream(edges, comp):
         v += children
     return set(key for key,val in v if not val) 
 
+def flatten_tree(tree, new_root=None):
+    if new_root is None:
+        new_root = root_solver(tree)
+    Ftree,Stree,Vtree = tree
+    new_F= OrderedDict((comp, new_root) for comp in Ftree.keys())
+    new_V= {comp: new_root for comp in Vtree.keys()}
+    return new_F, {}, new_V
+
 # def rearrange_edges(edges, output_set):
 #     Ein, Eout, Rin = copy_dicts(edges)
 #     Ein_new, Eout_new, Rin_new = {}, {}, Rin
