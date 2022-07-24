@@ -110,10 +110,10 @@ class Component():
     def fromsympy(cls, expr, tovar=None, ignoretovar=False, component=None, arg_mapping=None):
         fx, inputs, inpunitsflat = sympy_fx_inputs(expr)
         output_names = (tovar.varid,) if tovar and not ignoretovar else (None,) 
-        if not isinstance(type(expr), sp.core.function.UndefinedFunction):# and hasattr(expr, 'dimensionality'): 
+        if tovar and not isinstance(type(expr), sp.core.function.UndefinedFunction):# and hasattr(expr, 'dimensionality'): 
             # this second conditions can be dangerous but need it to fix something
-            outunitsflat = (tovar.varunit,) if tovar else (None,)
-            unitoverride = tovar.forceunit if tovar else False
+            outunitsflat = (tovar.varunit,)
+            unitoverride = tovar.forceunit
             fxforunits = sp.lambdify(inputs, expr, "numpy")
             fx = fx_with_units(fx, inpunitsflat, outunitsflat, unitoverride, fxforunits) 
         input_names = tuple(inp.varid for inp in inputs)
