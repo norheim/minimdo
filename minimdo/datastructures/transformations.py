@@ -3,7 +3,7 @@ from datastructures.execution import Component
 import sympy as sp
 import networkx as nx
 
-def partial_inversion(old_expression, old_output=None, new_output=None):
+def partial_inversion(old_expression, old_output=None, new_output=None, flatten_residuals=True):
     # old_expression needs to be a sympy expr
     # old_output can be None or any sympy variable
     # new_output can be None or any sympy variable part of old_expression and old_output
@@ -22,8 +22,11 @@ def partial_inversion(old_expression, old_output=None, new_output=None):
         new_expression = new_expression[sol_idx]
         return sp.expand(new_expression)
     else:
-        num, _ = sp.fraction(sp.together(diff))
-        return num
+        if flatten_residuals:
+            num, _ = sp.fraction(sp.together(diff))
+            return num
+        else:
+            return diff
 
 def var_from_mapping(arg_mapping, Eout, comp):
     if Eout[comp][0] is not None:
@@ -45,7 +48,11 @@ def transform_components(oldedges, newedges, components, arg_mapping):
         old_out = var_from_mapping(arg_mapping, Eout, compid)
         new_out = var_from_mapping(arg_mapping, newEout, compid) 
         if old_out != new_out:
-            new_function_expression = partial_inversion(comp.fxdisp, old_out, new_out)
-            newcomponent = Component.fromsympy(new_function_expression, new_out, component=compid)
+            new_function_expression = partial_inversion(comp.fxdisp, old_out, new_out, flatten_residuals=False) # flatten_residuals to false is required for unit conversion to work further down
+            ignoretovar = False
+            if new_out == None: # to still cary out the unit conversion
+                ignoretovar = True 
+                new_out = old_out
+            newcomponent = Component.fromsympy(new_function_expression, new_out, ignoretovar=ignoretovar, component=compid)
             new_components.append(newcomponent)
     return new_components

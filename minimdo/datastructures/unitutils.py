@@ -74,14 +74,13 @@ def expression_conversion_unit(expr_unit, tounit=None):
 def get_unit_multiplier(unit):
     return unit.to_base_units().magnitude
 
+def get_conversion_factors(units):
+    return [get_unit_multiplier(unit) for unit in units]
+
 def unit_conversion_factors(outunitpairs, inunits):
-    convert = [get_unit_multiplier(inp) for 
-            inp in inunits]
-    factors = []
-    for outunit, tounit in outunitpairs:
-        conversion_unit = expression_conversion_unit(outunit, tounit)
-        factor = get_unit_multiplier(conversion_unit)
-        factors.append(factor)
+    convert = get_conversion_factors(inunits)
+    outunits = (expression_conversion_unit(outunit, tounit) for outunit, tounit in outunitpairs)
+    factors = get_conversion_factors(outunits)
     return convert, factors
 
 def listify(out):
@@ -106,13 +105,12 @@ def executable_with_conversion(convert, factors, fx):
     return scaled_fx
 
 def fx_with_units(fx, inunitsflat, outunitsflat, overrideoutunits=False, fxforunits=None):
-    if overrideoutunits:
-        # we prevent conversion of output from happening
-        outunitpairs = tuple((outunit, outunit) for outunit in outunitsflat)
-    else:
+    outunits = outunitsflat
+    if not overrideoutunits:
         fxforunits = fxforunits if fxforunits is not None else fx
         expr_units = get_unit(fxforunits, inunitsflat)
-        outunitpairs = tuple((outunit, outunitsflat[idx]) for idx, outunit in enumerate(expr_units))
-    convert, factors = unit_conversion_factors(outunitpairs, inunitsflat)
+        outunits = (expression_conversion_unit(outunit, outunitsflat[idx]) for idx, outunit in enumerate(expr_units))
+    convert = get_conversion_factors(inunitsflat)
+    factors = get_conversion_factors(outunits)
     fx_scaled = executable_with_conversion(convert, factors, fx)
     return fx_scaled

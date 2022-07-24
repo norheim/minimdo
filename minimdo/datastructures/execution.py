@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datastructures.graphutils import merge_edges
 import numpy as np
 #import autograd.numpy as anp
@@ -109,10 +110,10 @@ class Component():
     def fromsympy(cls, expr, tovar=None, ignoretovar=False, component=None, arg_mapping=None):
         fx, inputs, inpunitsflat = sympy_fx_inputs(expr)
         output_names = (tovar.varid,) if tovar and not ignoretovar else (None,) 
-        if tovar and not isinstance(type(expr), sp.core.function.UndefinedFunction):# and hasattr(expr, 'dimensionality'): 
+        if not isinstance(type(expr), sp.core.function.UndefinedFunction):# and hasattr(expr, 'dimensionality'): 
             # this second conditions can be dangerous but need it to fix something
-            outunitsflat = (tovar.varunit,)
-            unitoverride = tovar.forceunit
+            outunitsflat = (tovar.varunit,) if tovar else (None,)
+            unitoverride = tovar.forceunit if tovar else False
             fxforunits = sp.lambdify(inputs, expr, "numpy")
             fx = fx_with_units(fx, inpunitsflat, outunitsflat, unitoverride, fxforunits) 
         input_names = tuple(inp.varid for inp in inputs)
@@ -128,6 +129,12 @@ class Component():
     def __repr__(self):
         return str((self.inputs, self.component, self.outputs, str(self.fxdisp)))
 
+def comp_id_lookup(comps):
+    comp_ids = defaultdict(list)
+    for comp in comps:
+        comp_ids[comp.component].append(comp)
+    return {key: var[0] if len(var)==1 else var for key,var in comp_ids.items()}
+
 def edges_from_components(comps):
     Ein,Eout = dict(),dict()
     for comp in comps:
@@ -141,6 +148,8 @@ def newfx(c, *x):
     out = [outval[idx]-elt for idx,elt in enumerate(fxval)]
     # IMPORTANT: flatten the output!
     return [elt for vector in out for elt in vector]
+
+# TODO: this now lives in transformations
 
 def residual_component(c, idx=0):
     newinputs = c.inputs + c.outputs
