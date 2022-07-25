@@ -23,7 +23,7 @@ m = model.root
 # Geometry
 geometry = addsolver(m, name='geometry', idbyname=idbyname)
 A_s = Var('A_{solar}', unit='m^2')
-alpha = Par(r'\alpha', 0.05)
+alpha = Par(r'\alpha', 0.2)
 adda(geometry, Df, (4*abs(A_s)/(pi*(1-alpha)))**0.5)
 d = adda(geometry, 'd', alpha*Df)
 

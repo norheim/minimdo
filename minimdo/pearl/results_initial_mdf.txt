@@ -1,0 +1,45 @@
+Optimization Problem -- Optimization using pyOpt_sparse
+================================================================================
+    Objective Function: _objfunc
+
+    Solution: 
+--------------------------------------------------------------------------------
+    Total Time:                  208.1927
+       User Objective Time :     142.7314
+       User Sensitivity Time :    65.1855
+       Interface Time :            0.1150
+       Opt Solver Time:            0.1608
+    Calls to Objective Function :     134
+    Calls to Sens Function :          102
+    
+----------------
+Design Variables
+----------------
+name  val           size  lower  upper  
+----  ------------  ----  -----  ----- 
+v     [0.02466145]  1     0.0    1e+30  
+EN    [26.1952798]  1     0.1    100.0  
+h_f   [0.09]        1     0.0    1e+30  
+t_f   [0.09999999]  1     0.1    10.0   
+t_s   [10.0000001]  1     0.1    10.0   
+D_s   [0.19207752]  1     0.1    10.0   
+D_d   [0.21341946]  1     0.1    10.0   
+
+-----------
+Constraints
+-----------
+name   val               size  lower   upper  equals  
+-----  ----------------  ----  ------  -----  ------ 
+neq41  [9.99996028e-09]  1     -1e+30  0.0    None    
+neq38  [9.99999869e-09]  1     -1e+30  0.0    None    
+neq39  [-1.59426583]     1     -1e+30  0.0    None    
+neq40  [9.86075652e-09]  1     -1e+30  0.0    None    
+neq42  [9.86056392e-09]  1     -1e+30  0.0    None    
+neq43  [9.99995907e-09]  1     -1e+30  0.0    None    
+
+----------
+Objectives
+----------
+name   val            size  
+-----  -------------  ---- 
+obj37  [585.3043106]  1     
