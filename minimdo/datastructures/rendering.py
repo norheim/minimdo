@@ -12,6 +12,8 @@ def sequence_permutation_from_order(order, Ein, Eout, Vtree, Ftree):
     solver_vars = defaultdict(list)
     for solvevar, solver in Vtree.items():
         solver_vars[solver].append(solvevar)
+    solver_vars = {key:sorted(val) for key,val in solver_vars.items()}
+
     permutation = []
     for comp in sequence:
         permutation += Eout[comp] if Eout[comp][0] != None else []
@@ -101,6 +103,9 @@ def plot_patches(ax, allpatches, patchwidth=2):
         rect = patches.Rectangle(ulcorner, col_size, row_size, linewidth=patchwidth, edgecolor='#737373', facecolor='none')
         ax.add_patch(rect)
 
+def is_end_comp(Eout, fx, dispendcomp=True):
+    return Eout[fx] == (None,) and dispendcomp
+    
 def render_incidence(edges, tree, namingfunc=None, displaysolver=True, rawvarname=False, **kwargs):
     if namingfunc is None:
         varnameformat = '{}' if rawvarname else'x_{{{}}}'
@@ -110,7 +115,8 @@ def render_incidence(edges, tree, namingfunc=None, displaysolver=True, rawvarnam
     sequence, permutation, Ein, Eout, solver_iterator = incidence_artifacts(edges, tree, displaysolver)
     A = generate_incidence_matrix(Ein, Eout, sequence, permutation)
     column_labels = ['${}$'.format(namingfunc(var, VAR)) for var in permutation]
-    row_labels = ['${}$'.format(namingfunc(fx, COMP)) for fx in sequence]
+    dispendcomp = kwargs.pop('dispendcomp', False)
+    row_labels = ['${}$'.format('h_{}'.format(fx) if is_end_comp(Eout, fx, dispendcomp) else namingfunc(fx, COMP) ) for fx in sequence]
     fig, ax =plot_incidence_matrix(A, column_labels, row_labels, **kwargs)
     if displaysolver:
         allpatches=(patch for patches in solver_iterator for patch in patches)

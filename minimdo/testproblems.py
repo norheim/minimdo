@@ -4,8 +4,9 @@ import numpy as np
 from datastructures.graphutils import edges_E, flat_graph_formulation
 from datastructures.tearing import dir_graph
 
-def generate_random_prob(n_eqs, n_vars, seed=8, sparsity=1.0):
-    n_nodes = n_eqs + n_vars
+def generate_random_prob(n_eqs, n_vars, seed=8, sparsity=1.0, independent_of_n=False):
+    addfactor = 0 if independent_of_n else n_vars
+    n_nodes = n_eqs + addfactor
     p = n_nodes/(n_eqs*n_vars + 1.0e-17)*sparsity
     p = min(p, 1.0 - 1.0e-6) 
     G = bipartite_random_graph(n_eqs, n_vars, p, seed)
@@ -30,9 +31,9 @@ def generate_random_prob(n_eqs, n_vars, seed=8, sparsity=1.0):
     #allowed = copy.deepcopy(eqv)
     return eqv, varinc, M
 
-def random_problem_with_artifacts(m,n,seed,sparsity):
+def random_problem_with_artifacts(m,n,seed,sparsity, **kwargs):
     seed = int(seed) # required for the way we generate random problems
-    eq_incidence, var_incidence, outset = generate_random_prob(m, n, seed, sparsity)
+    eq_incidence, var_incidence, outset = generate_random_prob(m, n, seed, sparsity, **kwargs)
     edges_varonleft = edges_E(eq_incidence)
     eqnidxs = eq_incidence.keys()
     varidxs = var_incidence.keys()

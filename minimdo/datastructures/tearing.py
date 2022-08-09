@@ -50,12 +50,12 @@ def sccelim(model, where):
             cycle_eqnodes = set(cycle).intersection(model._y.keys())
             model.cbLazy(gp.quicksum(model._y[node] for node in cycle_eqnodes)>=1)
 
-def min_arc_set(edges, dout, vrs, eqns):
+def min_arc_set(edges, dout, vrs, eqns, timeout=100):
     X = nx.DiGraph(dir_graph(edges, vrs, dout.items()))
     # make sure edges are in the right order
     m = gp.Model('cycles')
     m.setParam('OutputFlag', False )
-    m.setParam('TimeLimit', 100)
+    m.setParam('TimeLimit', timeout)
     y = m.addVars(eqns, name="elimination", vtype=GRB.BINARY)
     m.setObjective(y.sum('*'), GRB.MINIMIZE)
     m._edges = edges
@@ -144,11 +144,11 @@ def var_matched_cons_reversed(x, i, not_input=None, not_output=None):
     else:
         return x.sum(i, '*') <= eqconstant
 
-def min_arc_set_assign(edges_left_right, leftset, rightset, not_input=None, not_output=None):
+def min_arc_set_assign(edges_left_right, leftset, rightset, not_input=None, not_output=None, timeout=100):
     G = nx.Graph(edges_left_right)
     m = gp.Model('cycles')
     m.setParam('OutputFlag', False )
-    m.setParam('TimeLimit', 100)
+    m.setParam('TimeLimit', timeout)
     x = m.addVars(edges_left_right, name="assign", vtype=GRB.BINARY)
     # A variable node can have maximum one ouput edge (possibly of none)
     m.addConstrs((x.sum('*',i) <= 1 for i in rightset), name='equations')
