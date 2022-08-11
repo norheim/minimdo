@@ -116,7 +116,7 @@ def render_incidence(edges, tree, namingfunc=None, displaysolver=True, rawvarnam
     A = generate_incidence_matrix(Ein, Eout, sequence, permutation)
     column_labels = ['${}$'.format(namingfunc(var, VAR)) for var in permutation]
     dispendcomp = kwargs.pop('dispendcomp', False)
-    row_labels = ['${}$'.format('h_{}'.format(fx) if is_end_comp(Eout, fx, dispendcomp) else namingfunc(fx, COMP) ) for fx in sequence]
+    row_labels = ['${}$'.format('h_{{{}}}'.format(fx) if is_end_comp(Eout, fx, dispendcomp) else namingfunc(fx, COMP) ) for fx in sequence]
     fig, ax =plot_incidence_matrix(A, column_labels, row_labels, **kwargs)
     if displaysolver:
         allpatches=(patch for patches in solver_iterator for patch in patches)

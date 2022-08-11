@@ -84,6 +84,10 @@ def edges_to_Ein_Eout(edges):
 def all_components(E):
     return set(E.keys())
 
+def all_component_nodes(edges):
+    Ein, Eout = edges_to_Ein_Eout(edges)
+    return all_components(Ein) | all_components(Eout)
+
 def end_components(E):
     return [key for key,var in E.items() if None in var]
 

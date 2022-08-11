@@ -4,7 +4,7 @@ from datastructures.execution import sympy_fx_inputs, Component, edges_from_comp
 from datastructures.unitutils import get_unit, ureg
 from compute import Var
 from datastructures.workflow import NEQ, EQ, OBJ, OPT, SOLVE
-from datastructures.graphutils import VAR, COMP, SOLVER, copy_dicts
+from datastructures.graphutils import VAR, COMP, SOLVER, all_variables, copy_dicts, edges_to_Ein_Eout
 from datastructures.runpipeline import nestedform_to_mdao
 from datastructures.unitutils import fx_with_units
 import numpy as np
@@ -37,6 +37,9 @@ class Model():
     def generate_mdao(self, mdf=True):
         edges, tree = self.generate_formulation()
         return nestedform_to_mdao(edges, tree, self.components, self.solvers_options, self.comp_options, self.var_options, self. nametyperepr, mdf)
+
+def var_params(model, edges):
+    return {var for var in all_variables(*edges_to_Ein_Eout(edges)) if model.idmapping[var].always_input}
 
 def edges_no_param(model, edges):
     Ein, Eout, Rin = edges

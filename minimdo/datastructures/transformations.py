@@ -1,4 +1,4 @@
-from datastructures.graphutils import edges_to_Ein_Eout, flat_graph_formulation
+from datastructures.graphutils import all_component_nodes, edges_to_Ein_Eout, flat_graph_formulation
 from datastructures.execution import Component
 import sympy as sp
 import networkx as nx
@@ -36,6 +36,7 @@ def var_from_mapping(arg_mapping, Eout, comp):
 
 def transform_components(oldedges, newedges, components, arg_mapping):
     _, Eout = edges_to_Ein_Eout(oldedges)
+    # Test that graphs are the same
     old_edges = flat_graph_formulation(*oldedges).to_undirected()
     new_edges = flat_graph_formulation(*newedges).to_undirected()
     graph_isomorphic = {frozenset(elt) for elt in new_edges.edges()}=={frozenset(elt) for elt in old_edges.edges()}
@@ -43,7 +44,7 @@ def transform_components(oldedges, newedges, components, arg_mapping):
     # This is just to make sure that the new edges have an isomorphic undirected graph, which should be the case
     _, newEout = edges_to_Ein_Eout(newedges)
     new_components = []
-    for comp in components:
+    for comp in (comp for comp in components if comp.component in all_component_nodes(oldedges)): # could have also used newedges
         compid = comp.component
         old_out = var_from_mapping(arg_mapping, Eout, compid)
         new_out = var_from_mapping(arg_mapping, newEout, compid) 

@@ -111,17 +111,21 @@ def reorder_merge_solve(edges, tree, merge_order, solver_idx, mdf=True):
                     nFtree[node.name] = Ftree[node.name]
     return edges, (nFtree, tree[1], tree[2])
 
-def reformulate(edges, tree, outset_initial=None, new_outset=None, not_outputs=None, root_solver_name='root', mdf=True, based_on_original2=False):
+def reformulate(edges, tree, outset_initial=None, new_outset=None, not_outputs=None, root_solver_name='root', mdf=True, based_on_original2=False, solveforvars=True):
     if new_outset:
         edges_new = invert_edges(edges[0], edges[1], newout=new_outset)
-        reduced_comps = {comp for comp in outset_initial.keys() if comp not in new_outset}
-        upstream_possibilites = set()
-        for elt in reduced_comps:
-            upstream_possibilites.update(upstream(edges_new, elt))
-        upstream_possibilites.difference_update(new_outset.values())
-        if not_outputs:
-            upstream_possibilites.difference_update(not_outputs)
-        tree_new = tree[0], {}, {invar: root_solver_name for invar in islice(upstream_possibilites, len(reduced_comps))}
+        if solveforvars:
+            reduced_comps = {comp for comp in outset_initial.keys() if comp not in new_outset}
+            upstream_possibilites = set()
+            for elt in reduced_comps:
+                upstream_possibilites.update(upstream(edges_new, elt))
+            upstream_possibilites.difference_update(new_outset.values())
+            if not_outputs:
+                upstream_possibilites.difference_update(not_outputs)
+            solvevars = {invar: root_solver_name for invar in islice(upstream_possibilites, len(reduced_comps))}
+        else:
+            solvevars = {}
+        tree_new = tree[0], {}, solvevars
     else:
         edges_new = edges
         tree_new = tree
