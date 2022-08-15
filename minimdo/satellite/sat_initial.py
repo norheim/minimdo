@@ -57,7 +57,7 @@ rho_p = Par(r'\rho_p', 2, 'kg/m^1.5')
 m_p = adda(payload, 'm_p', rho_p*D_p**1.5, unit='kg')
 
 comms = addsolver(m, name='comms')
-b = adda(comms, 'b', D/T, unit='MB/s')
+b = adda(comms, 'b', D/(g*T), unit='MB/s')
 λ_c = adda(comms, r'\lambda_c', c/f, unit='cm')
 G_T = Par('G_T', dBtoLinear(16.5), '')
 D_T = adda(comms, 'D_T', λ_c*(G_T/eta)**0.5/np.pi, unit='m')

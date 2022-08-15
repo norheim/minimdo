@@ -11,3 +11,6 @@ figures
 */datastructures/__pycache__/
 *.html
 *.out
+*.pdf
+*.tikz
+*.tex

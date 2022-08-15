@@ -2,6 +2,7 @@ import sympy as sp
 import numpy as np
 from compute import Var, ureg
 import jax.numpy as anp
+from math import isclose
 #import autograd.numpy as anp
 
 # The following class is a very hacky class that is used further down to recover the unit associated with a specific function. It overrides all standard operators in python
@@ -56,10 +57,14 @@ class MockQuantity(ureg.Quantity):
     #     else:
     #         return ureg.Quantity._add_sub(other, operator)
 
+def almostequal_dimensionality(dim1, dim2):
+    return all((isclose(factor,dim2[dim]) if dim in dim2 else False for dim,factor in dim1.items()))
+        
+
 def expression_conversion_unit(expr_unit, tounit=None):
     unit = tounit if tounit else ureg('')
     if tounit:
-        assert(unit.dimensionality == expr_unit.dimensionality)
+        assert(almostequal_dimensionality(unit.dimensionality, expr_unit.dimensionality))
         conversion_unit = unit
     else: # tounit was not given
         if not hasattr(expr_unit, 'units'):

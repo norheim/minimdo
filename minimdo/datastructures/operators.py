@@ -114,7 +114,11 @@ def reorder_merge_solve(edges, tree, merge_order, solver_idx, mdf=True):
 def reformulate(edges, tree, outset_initial=None, new_outset=None, not_outputs=None, root_solver_name='root', mdf=True, based_on_original2=False, solveforvars=True):
     if new_outset:
         edges_new = invert_edges(edges[0], edges[1], newout=new_outset)
-        if solveforvars:
+        if solveforvars == 2: #HACK to use 2 for now
+            solvevars = {vr: root_solver_name for vr in outset_initial.values() if vr not in new_outset.values()}
+            #Alternative:
+            # {outvar: root_solver_name for comp,outvar in outset_initial.items() if comp not in new_outset.keys()}
+        elif solveforvars:
             reduced_comps = {comp for comp in outset_initial.keys() if comp not in new_outset}
             upstream_possibilites = set()
             for elt in reduced_comps:

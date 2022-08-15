@@ -123,7 +123,8 @@ class Component():
         return self.function(*args_in_order(indict, self.mapped_names))
     
     def graddict(self, indict):
-        args = np.array(args_in_order(indict, self.mapped_names))
+        #hstack instead of array for inputs being arrays
+        args = np.hstack(args_in_order(indict, self.mapped_names))
         return self.gradient(args)
 
     def __repr__(self):
