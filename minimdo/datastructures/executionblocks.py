@@ -53,10 +53,11 @@ class Expcomp(om.ExplicitComponent):
                 print(output_name, outputs[output_name])
 
     def compute_partials(self, inputs, partials, discrete_inputs=None):
-        _, output_names, _, gradfx = self.options['component']
-        J = gradfx(inputs)
-        for (outvar,invar),val in J.items():
-            partials[outvar,invar] = val
+        input_names, output_names, _, gradfx = self.options['component']
+        if input_names:
+            J = gradfx(inputs)
+            for (outvar,invar),val in J.items():
+                partials[outvar,invar] = val
 
 def addoptimizer(mdao, parentname, solvername, design_vars, options, varoptions):
     root = mdao[parentname]
