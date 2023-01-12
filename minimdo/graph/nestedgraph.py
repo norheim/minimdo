@@ -1,7 +1,7 @@
 from collections import defaultdict
 from telnetlib import GA
-from datastructures.graphutils import flat_graph_formulation, solver_children, Node, COMP, SOLVER, VAR, root_solver, all_components, sources, edges_to_Ein_Eout
-from datastructures.mergegraph import merge_graph, split_graph
+from graph.graphutils import flat_graph_formulation, solver_children, Node, COMP, SOLVER, VAR, root_solver, all_components, sources, edges_to_Ein_Eout
+from graph.mergegraph import merge_graph, split_graph
 
 def level_order_tree(tree, root=1):
     level_order = [root]
@@ -19,7 +19,7 @@ def level_order_tree(tree, root=1):
 def typed_solver_children(tree, solver_idx, node_type, nodetyperepr):
     return {Node(comp, node_type, nodetyperepr) for comp in solver_children(tree, solver_idx)}
 
-def build_typedgraph(edges, tree, nodetyperepr, exclude_unique_sources=True):
+def build_typedgraph(edges, tree, nodetyperepr=None, exclude_unique_sources=True):
     Ftree, Stree, Vtree = tree
     graphs = dict()
     G_parent = flat_graph_formulation(*edges, nodetyperepr=nodetyperepr)

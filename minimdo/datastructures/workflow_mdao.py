@@ -1,4 +1,4 @@
-from datastructures.workflow import OPT, SOLVE, NEQ, EQ, OBJ, EXPL, IMPL
+from graph.workflow import OPT, SOLVE, NEQ, EQ, OBJ, EXPL, IMPL
 from datastructures.graphutils import SOLVER, VAR, COMP
 from utils import normalize_name
 from datastructures.execution import Component

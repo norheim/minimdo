@@ -1,5 +1,5 @@
 from notation import default_sequence
-from representations import tree_incidence
+from graph.graphview import tree_incidence
 import matplotlib.pyplot as plt
 
 def auto_incidence_tree(m, **kwargs):

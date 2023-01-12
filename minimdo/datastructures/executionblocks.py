@@ -1,5 +1,5 @@
 import openmdao.api as om
-from datastructures.workflow import OBJ, NEQ, EQ
+from graph.workflow import OBJ, NEQ, EQ
 from itertools import islice
 class Impcomp(om.ImplicitComponent):
     def initialize(self):

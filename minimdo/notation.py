@@ -1,5 +1,5 @@
 import networkx as nx
-from representations import digraph_repr
+from graph.graphview import digraph_repr
 from compute import addsolver, SOLVER, INTER, END, RefNode, SolverNode
 from anytree import LevelOrderIter, PreOrderIter
 from operatorsold import merge_pure, standardize

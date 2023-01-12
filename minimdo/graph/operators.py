@@ -1,6 +1,6 @@
-from datastructures.graphutils import solver_children
+from graph.graphutils import solver_children
 from collections import OrderedDict, defaultdict
-from datastructures.graphutils import COMP, SOLVER, all_components, Node, flat_graph_formulation, default_tree, upstream
+from graph.graphutils import COMP, SOLVER, all_components, Node, flat_graph_formulation, default_tree, upstream
 from itertools import chain, islice
 import networkx as nx
 

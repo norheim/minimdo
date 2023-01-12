@@ -2,7 +2,7 @@ import numpy as np
 import openmdao.api as om
 from datastructures.graphutils import root_solver, nested_sources, VAR, namefromid
 from datastructures.nestedgraph import root_sources
-from datastructures.workflow import EXPL, IMPL, SOLVE, OPT, EQ, NEQ, OBJ
+from graph.workflow import EXPL, IMPL, SOLVE, OPT, EQ, NEQ, OBJ
 from datastructures.executionblocks import addexpcomp, addimpcomp, addsolver, addoptimizer, addoptfunc
 
 architecture_mappings = {

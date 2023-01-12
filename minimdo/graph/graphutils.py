@@ -4,7 +4,7 @@ from functools import partial
 from itertools import chain, product
 from typing_extensions import OrderedDict
 import networkx as nx
-from representations import draw
+from graph.graphview import draw
 from utils import normalize_name
 
 NodeTypes = Enum('NodeTypes', 'VAR COMP SOLVER')

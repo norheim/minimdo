@@ -1,4 +1,4 @@
-from datastructures.graphutils import Node, VAR, SOLVER, filter_comps, all_edges, all_varnodes, sources, merge_edges, all_variables, intermediary_variables, end_components
+from graph.graphutils import Node, VAR, SOLVER, filter_comps, all_edges, all_varnodes, sources, merge_edges, all_variables, intermediary_variables, end_components
 from functools import reduce
 import networkx as nx
 

@@ -5,9 +5,15 @@ import matplotlib.patches as patches
 import numpy as np
 import sympy.printing as printing
 from anytree import RenderTree, PreOrderIter
-from inputresolver import getallvars
 from notationtree import all_vars_from_incidence
 from compute import INTER, END
+
+def getallvars(eqs, sympy=True):
+    vrs = set()
+    for left, right in eqs.values():
+        right_symbols = right.free_symbols if sympy else set(right)
+        vrs = vrs.union({left}).union(right_symbols)
+    return vrs
 
 def generate_label(elt, latexlabel=True):
     if latexlabel:

@@ -1,9 +1,8 @@
 from collections import defaultdict
-from datastructures.graphutils import (edges_to_Ein_Eout, all_variables, all_components, dfs_tree, end_components, root_solver, solver_children, VAR, COMP, SOLVER, namefromid)
-from datastructures.workflow import order_from_tree, ENDCOMP, COMP
+from graph.graphutils import (edges_to_Ein_Eout, all_variables, all_components, dfs_tree, end_components, root_solver, solver_children, VAR, COMP, SOLVER, namefromid)
+from graph.workflow import order_from_tree, ENDCOMP, COMP
 import matplotlib.patches as patches
 import numpy as np
-from representations import plot_incidence_matrix
 import matplotlib.pyplot as plt
 
 def sequence_permutation_from_order(order, Ein, Eout, Vtree, Ftree):
@@ -105,7 +104,29 @@ def plot_patches(ax, allpatches, patchwidth=2):
 
 def is_end_comp(Eout, fx, dispendcomp=True):
     return Eout[fx] == (None,) and dispendcomp
-    
+
+def plot_incidence_matrix(A, column_labels, row_labels, pad=None, **kwargs):
+    fontsize = kwargs.get('fontsize', 16)
+    hideticks = kwargs.get('hideticks', False)
+    rotation = kwargs.get('rotation', 60)
+    fig, ax = plt.subplots(figsize=kwargs.get('figsize',None))
+    ax.pcolormesh(A, cmap='Greys', edgecolors='lightgray', linewidth=1, vmin=0, vmax=1.2)
+    xtickidx, xtags = zip(*enumerate(column_labels))
+    kwargs = {'ha': 'left'} if pad else dict()
+    plt.xticks(np.array(xtickidx)+0.5, xtags, rotation = rotation, fontsize=fontsize, **kwargs)
+    ax.xaxis.tick_top()
+    ytickidx, ytags = zip(*enumerate(row_labels))
+    ytickargs = {'ha':'left'} if pad else dict()
+    plt.yticks(np.array(ytickidx)+0.5, ytags, fontsize=fontsize, **ytickargs);
+    ax.invert_yaxis()
+    ax.set_aspect('equal')
+    if pad:
+        yax = ax.get_yaxis()
+        yax.set_tick_params(pad=pad)
+    if hideticks:
+        ax.tick_params(axis=u'both', which=u'both',length=0)
+    return fig, ax 
+
 def render_incidence(edges, tree, namingfunc=None, displaysolver=True, rawvarname=False, **kwargs):
     if namingfunc is None:
         varnameformat = '{}' if rawvarname else'x_{{{}}}'

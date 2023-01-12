@@ -6,7 +6,7 @@ from runpipeline import nestedform_to_mdao
 import numpy as np
 from execution import Component
 from operators import sort_scc, reorder_merge_solve
-from representations import bipartite_repr
+from graph.graphview import bipartite_repr
 from inputresolver import getallvars, direct_eqs, invert_edges
 from tearing import min_max_scc, outset_from_solution
 from compute import Var
