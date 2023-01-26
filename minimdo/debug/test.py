@@ -1,18 +1,18 @@
-from graphutils import draw_graph_graphical_props, flat_graph_formulation, Node, VAR, COMP, SOLVER, nested_sources, merge_edges
-from nestedgraph import build_typedgraph, root_sources
-from compute import Var
-from api import Model, adda, addf, addsolver, setsolvefor, addobj, addineq
-from execution import edges_from_components, generate_components_and_residuals
-from operators import sort_scc, reorder_merge_solve
-from nestedgraph import build_typedgraph
-from workflow import get_f, OPT, EQ, NEQ, OBJ
-from workflow import order_from_tree, default_solver_options, mdao_workflow
-from workflow_mdao import mdao_workflow_with_args
-from assembly import build_archi
+from graph.graphutils import draw_graph_graphical_props, flat_graph_formulation, Node, VAR, COMP, SOLVER, nested_sources, merge_edges
+from graph.nestedgraph import build_typedgraph, root_sources
+from modeling.compute import Var
+from modeling.api import Model, adda, addf, addsolver, setsolvefor, addobj, addineq
+from modeling.execution import edges_from_components, generate_components_and_residuals
+from graph.operators import sort_scc, reorder_merge_solve
+from graph.nestedgraph import build_typedgraph
+from graph.workflow import get_f, OPT, EQ, NEQ, OBJ
+from graph.workflow import order_from_tree, default_solver_options, mdao_workflow
+from solver.workflow_mdao import mdao_workflow_with_args
+from solver.assembly import build_archi
 from sympy import exp
 import openmdao.api as om
-from assembly import buildidpvars, architecture_mappings
-from runpipeline import nestedform_to_mdao
+from solver.assembly import buildidpvars, architecture_mappings
+from solver.runpipeline import nestedform_to_mdao
 
 z1,z2,x,y2 = Var('z1'), Var('z2'), Var('x'), Var('y2')
 x0,x1,x2,x3 = Var('x0'), Var('x1'), Var('x2'), Var('x3')

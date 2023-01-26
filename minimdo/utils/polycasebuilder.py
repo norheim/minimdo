@@ -1,12 +1,12 @@
-from inputresolver import reassigneq
-from datastructures.execution import Component
+from trash.inputresolver import reassigneq
+from modeling.execution import Component
 import sympy as sp
 from collections import OrderedDict
-from datastructures.graphutils import all_variables, Node, VAR
-from datastructures.operators import eqv_to_edges_tree
-from compute import Var
-from randompoly import random_bijective_polynomial
-from testproblems import generate_random_prob
+from graph.graphutils import all_variables, Node, VAR
+from graph.operators import eqv_to_edges_tree
+from modeling.compute import Var
+from utils.randompoly import random_bijective_polynomial
+from utils.testproblems import generate_random_prob
 import numpy as np
 
 def get_arg_mapping(var_mapping, symbol_map=False):

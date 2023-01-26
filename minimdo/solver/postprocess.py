@@ -1,4 +1,4 @@
-from compute import prettyprintval, prettyprintunit
+from modeling.compute import prettyprintval, prettyprintunit
 import pandas as pd
 from graph.graphutils import VAR
 
