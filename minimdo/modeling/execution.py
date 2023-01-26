@@ -1,12 +1,11 @@
 from collections import defaultdict
-from datastructures.graphutils import merge_edges
 import numpy as np
 #import autograd.numpy as anp
 import jax.numpy as anp
 import sympy as sp
 #from autograd import jacobian
 from jax import jacobian
-from datastructures.unitutils import fx_with_units
+from modeling.unitutils import fx_with_units
 from compute import ureg
 
 import jax

@@ -1,7 +1,7 @@
 from graph.workflow import OPT, SOLVE, NEQ, EQ, OBJ, EXPL, IMPL
-from datastructures.graphutils import SOLVER, VAR, COMP
+from graph.graphutils import SOLVER, VAR, COMP
 from utils import normalize_name
-from datastructures.execution import Component
+from modeling.execution import Component
 
 def implicit_comp_name(comps):
     return "res_{}".format('_'.join(map(lambda x: normalize_name(str(x)),comps)))

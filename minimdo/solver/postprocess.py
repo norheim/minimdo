@@ -1,6 +1,6 @@
 from compute import prettyprintval, prettyprintunit
 import pandas as pd
-from datastructures.graphutils import VAR
+from graph.graphutils import VAR
 
 # Based on whatever is in varval, and not on running an MDAO model
 def print_values_static(model, varnames=None, get_value=None, display=True, rounding=None):

@@ -1,5 +1,5 @@
 from compute import Var, Par
-from datastructures.api import Model, adda, addsolver
+from modeling.api import Model, adda, addsolver
 from constants_balloon import ρinterp, Pinterp, Ginterp, Tinterp
 import numpy as np
 

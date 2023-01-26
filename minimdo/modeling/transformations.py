@@ -1,5 +1,5 @@
-from datastructures.graphutils import all_component_nodes, edges_to_Ein_Eout, flat_graph_formulation
-from datastructures.execution import Component
+from graph.graphutils import all_component_nodes, edges_to_Ein_Eout, flat_graph_formulation
+from modeling.execution import Component
 import sympy as sp
 import networkx as nx
 
