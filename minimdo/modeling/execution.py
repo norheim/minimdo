@@ -6,7 +6,7 @@ import sympy as sp
 #from autograd import jacobian
 from jax import jacobian
 from modeling.unitutils import fx_with_units
-from compute import ureg
+from modeling.compute import ureg
 
 import jax
 jax.config.update('jax_platform_name', 'cpu')

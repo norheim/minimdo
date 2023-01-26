@@ -127,7 +127,7 @@ def plot_incidence_matrix(A, column_labels, row_labels, pad=None, **kwargs):
         ax.tick_params(axis=u'both', which=u'both',length=0)
     return fig, ax 
 
-def render_incidence(edges, tree, namingfunc=None, displaysolver=True, rawvarname=False, **kwargs):
+def render_incidence(edges, tree, namingfunc=None, displaysolver=True, rawvarname=False, dsm=False, **kwargs):
     if namingfunc is None:
         varnameformat = '{}' if rawvarname else'x_{{{}}}'
         nodetyperepr = {VAR: varnameformat, COMP: 'f_{{{}}}', SOLVER: 's_{{{}}}'}
@@ -138,6 +138,8 @@ def render_incidence(edges, tree, namingfunc=None, displaysolver=True, rawvarnam
     column_labels = ['${}$'.format(namingfunc(var, VAR)) for var in permutation]
     dispendcomp = kwargs.pop('dispendcomp', False)
     row_labels = ['${}$'.format('h_{{{}}}'.format(fx) if is_end_comp(Eout, fx, dispendcomp) else namingfunc(fx, COMP) ) for fx in sequence]
+    if dsm:
+        row_labels = column_labels[:len(row_labels)]
     fig, ax =plot_incidence_matrix(A, column_labels, row_labels, **kwargs)
     if displaysolver:
         allpatches=(patch for patches in solver_iterator for patch in patches)

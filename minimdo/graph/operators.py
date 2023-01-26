@@ -94,7 +94,7 @@ def keep_original_order(Ftree, merge_order, reorder_only_scc=True):
     order_based_on_original = ([Node(comp, COMP) for comp in original_comp_order if Node(comp, COMP) in partition] for partition in merge_order)
     if not reorder_only_scc:
         # HACK: this definitly needs some fixing
-        order_based_on_original = sorted(order_based_on_original, key=lambda x: min(idx for idx,comp in enumerate(Ftree[0].keys()) if Node(comp,COMP) in x))
+        order_based_on_original = sorted(order_based_on_original, key=lambda x: min(idx for idx,comp in enumerate(original_comp_order) if Node(comp,COMP) in x))
     return order_based_on_original
 
 def reorder_merge_solve(edges, tree, merge_order, solver_idx, mdf=True):
@@ -138,3 +138,24 @@ def reformulate(edges, tree, outset_initial=None, new_outset=None, not_outputs=N
     order_based_on_original = keep_original_order(tree[0], order, not based_on_original2)
     edges_tear_ordered, tree_tear_ordered = reorder_merge_solve(edges_new, tree_new, order_based_on_original, root_solver_name, mdf=mdf)
     return edges_tear_ordered, tree_tear_ordered
+
+def dsm_reformulate(edges, tree, outset=None):
+    G = flat_graph_formulation(*edges)
+    C = nx.condensation(G)
+    if outset == None:
+        comp_order = list(tree[0].keys())
+    else:
+        comp_order = tuple(key for key,val in sorted(outset.items(), key=lambda item: item[1]))
+    nFtree = OrderedDict()
+    Stree = dict()
+    filterfx = filter_solver_comps
+    for n in nx.topological_sort(C):
+        filter_comps = {elt for elt in C.nodes[n]['members'] if filterfx(elt)}
+        if len(filter_comps) > 1:
+            new_idx = max(chain(Stree.keys(),(1,)))+1
+            Stree[new_idx] = 1
+        else:
+            new_idx = 1
+        for comp in sorted(filter_comps, key=lambda x: comp_order.index(x.name)):
+            nFtree[comp.name] = new_idx
+    return edges, (nFtree, Stree, dict())

@@ -2,7 +2,7 @@ from collections import OrderedDict
 from itertools import chain
 from modeling.execution import sympy_fx_inputs, Component, edges_from_components, component_hash
 from modeling.unitutils import get_unit, ureg
-from compute import Var
+from modeling.compute import Var
 from graph.workflow import NEQ, EQ, OBJ, OPT, SOLVE
 from graph.graphutils import VAR, COMP, SOLVER, all_variables, copy_dicts, edges_to_Ein_Eout
 from solver.runpipeline import nestedform_to_mdao

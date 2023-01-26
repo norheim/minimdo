@@ -1,6 +1,6 @@
 from enum import Enum
 from graph.graphutils import dfs_tree, merge_edges, solver_children, end_components, Node, SOLVER, VAR, COMP, all_solvers, path
-from utils import normalize_name
+from utils.utils import normalize_name
 from collections import defaultdict
 
 NodeTypesExtended = Enum('NodeTypesExtended', 'ENDCOMP')

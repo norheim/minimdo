@@ -38,3 +38,12 @@ def generate_random_polynomials(eqv, output_set, n_eqs, rng=None):
     components = residual_poly_executables(var_mapping, polynomials)
     directed_components = directed_poly_executables(var_mapping, polynomials, output_set)
     return polynomials, var_mapping, edges, tree, components+directed_components
+
+def generate_julia_polynomials(reseqs, vrs, n_eqs):
+    print('@var {}'.format(", ".join(['x_{}'.format(vr) for vr in vrs])))
+    print('@var λ[1:{}];'.format(n_eqs))
+    for key, var in reseqs.items():
+        print('h{}={};'.format(key, var))
+    print('vars=[{}]'.format(", ".join(['x_{}'.format(vr) for vr in vrs])))
+    print('dfdx=[{}]'.format(", ".join([str(0) if vr not in [16, 22, 21] else 'x_{}'.format(vr) for vr in vrs])))
+    print('h=[{}];'.format(", ".join(['h{}'.format(eq) for eq in reseqs.keys()])))

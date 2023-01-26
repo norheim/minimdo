@@ -1,6 +1,7 @@
 from modeling.compute import prettyprintval, prettyprintunit
 import pandas as pd
 from graph.graphutils import VAR
+from graph.matrixview import incidence_artifacts
 
 # Based on whatever is in varval, and not on running an MDAO model
 def print_values_static(model, varnames=None, get_value=None, display=True, rounding=None):
@@ -28,3 +29,9 @@ def update_varval(model, prob, namingfunc, varnames=None):
     for var in var_refs:
         var.varval = prob.get_val(namingfunc(var.varid, VAR))[0]
         var.assumed = {key2: prob.get_val(namingfunc(key2.varid, VAR))[0] for key2 in var.assumed.keys()}
+
+def print_vars_in_order(prob, edges, tree, var_mapping):
+    d = {varn:prob.get_val(varn) for _,(_,varn) in var_mapping.items()}
+    df = pd.DataFrame(d)
+    _, permutation, _, _, _ = incidence_artifacts(edges, tree)
+    return df[[var_mapping[elt][1] for elt in permutation[::-1]]].T

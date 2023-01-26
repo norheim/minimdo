@@ -5,8 +5,8 @@ import matplotlib.patches as patches
 import numpy as np
 import sympy.printing as printing
 from anytree import RenderTree, PreOrderIter
-from notationtree import all_vars_from_incidence
-from compute import INTER, END
+from trash.notationtree import all_vars_from_incidence
+from modeling.compute import INTER, END
 
 def getallvars(eqs, sympy=True):
     vrs = set()
