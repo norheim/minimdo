@@ -67,3 +67,18 @@ def run_and_save_archi(prob, x0, vrs):
     optres = extractvals(prob, vrs.values())
     optres_save = extractvals(prob, vrs.values())
     return optres, optres_save
+
+def perturb(val, rand_range=(10,20), fixed_direction=None, rng=None):
+    rng = rng if rng else np.random
+    direction = lambda : fixed_direction if fixed_direction != None else rng.choice([-1,1]) 
+    if direction()==0:
+        return rng.uniform(*rand_range)
+    else:
+        return val+rng.uniform(*rand_range)*direction()
+
+def partial_perturb(x0, perturb_entries=None, rand_range=(10,20), fixed_direction=None, rng=None):
+    if isinstance(x0, list):
+        x0 = {val: 0 for val in x0}
+    perturb_entries = perturb_entries if perturb_entries else []
+    x_new = {key:val if key not in perturb_entries else perturb(val, rand_range, fixed_direction, rng) for key,val in x0.items()}
+    return x_new
