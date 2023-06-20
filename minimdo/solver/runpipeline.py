@@ -2,7 +2,7 @@ from graph.graphutils import flat_graph_formulation, solver_children, root_solve
 from modeling.execution import generate_components_and_residuals
 from graph.graphutils import namefromid
 from graph.operators import sort_scc, reorder_merge_solve
-from graph.workflow import get_f, order_from_tree, default_solver_options, mdao_workflow, implicit_comp_name
+from graph.workflow import get_f, order_from_tree, default_solver_options, mdao_workflow, implicit_comp_name, OPT, SOLVE
 from solver.workflow_mdao import mdao_workflow_with_args
 from solver.assembly import build_archi
 from utils.executeformulations import perturb_inputs, run_and_save_archi
@@ -13,7 +13,7 @@ def get_solver_implicit_system(groups, tree, solver_idx):
     name = implicit_comp_name((Node(idx, COMP) for idx in solver_children(tree[0], solver_idx)))
     return getattr(s, name)
 
-def run_valid_formulation(ordered_edges, ordered_tree, components, solvers_options, comp_options, var_options, nodetyperepr):
+def run_valid_formulation(ordered_edges, ordered_tree, components, solvers_options, comp_options, var_options, nodetyperepr, opt=True):
     namingfunc = namefromid(nodetyperepr)
     sequence = order_from_tree(ordered_tree[0], ordered_tree[1], ordered_edges[1])
     solvers_options = default_solver_options(ordered_tree, solvers_options)
@@ -21,15 +21,16 @@ def run_valid_formulation(ordered_edges, ordered_tree, components, solvers_optio
     all_components = generate_components_and_residuals(components, ordered_edges)
     lookup_f = get_f(all_components, ordered_edges)
     wfmdao = mdao_workflow_with_args(wf, lookup_f, namingfunc)
-    prob, mdao_in, groups = build_archi(ordered_edges, ordered_tree, wfmdao, namingfunc)
+    prob, mdao_in, groups = build_archi(ordered_edges, ordered_tree, wfmdao, namingfunc, opt=opt)
     return prob, mdao_in, groups
 
 def nestedform_to_mdao(edges, tree, components, solvers_options, comp_options, var_options, nodetyperepr, mdf=True):
     G = flat_graph_formulation(*edges)
     merge_order = sort_scc(G)
     merge_parent = root_solver(tree) # all merged components will have this solver as the parent
+    root_is_opt = solvers_options[merge_parent].get('type', SOLVE) == OPT if solvers_options else False
     ordered_edges, ordered_tree = reorder_merge_solve(edges, tree, merge_order, merge_parent, mdf)
-    prob, mdao_in, groups = run_valid_formulation(ordered_edges, ordered_tree, components, solvers_options, comp_options, var_options, nodetyperepr)
+    prob, mdao_in, groups = run_valid_formulation(ordered_edges, ordered_tree, components, solvers_options, comp_options, var_options, nodetyperepr, root_is_opt)
     return prob, mdao_in, groups, (ordered_edges, ordered_tree), merge_order
 
     # print(mdao_in)

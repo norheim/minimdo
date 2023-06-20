@@ -62,6 +62,7 @@ class Var(sp.core.Symbol):
         out.varid = varid if varid != None else name
         out.assumed = dict() # sometimes to generate varval we need to assume values
                              # for the function that computed this value 
+        out.shape = None
         return out
     
     def custom_latex_repr(self):

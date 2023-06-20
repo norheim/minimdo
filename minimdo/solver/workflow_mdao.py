@@ -29,7 +29,7 @@ def implargs_mdao(functype, compids, designvars, parentid, complookup, namefromi
         comp = complookup(compid)
         inputs = namefromid(comp.inputs, VAR, isiter=True)
         output = namefromid(designvars[idx], VAR)
-        copiedcomp = Component(comp.function, inputs, (None,), comp.component, comp.indims, comp.outdims)
+        copiedcomp = Component(comp.function, inputs, (None,), comp.id, comp.indims, comp.outdims)
         impl_comps.append([inputs, (output,), copiedcomp.evaldict, copiedcomp.graddict, 1.0])
     return (functype, parentname, compname, impl_comps)
 
@@ -38,7 +38,7 @@ def explargs_mdao(functype, compid, parentid, complookup, namefromid):
     parentname = namefromid(parentid, SOLVER)
     comp = complookup(compid)
     inputs, outputs = namefromid(comp.inputs, VAR, isiter=True), namefromid(comp.outputs, VAR, isiter=True)
-    copiedcomp = Component(comp.function, inputs, outputs, comp.component, comp.indims, comp.outdims)
+    copiedcomp = Component(comp.function, inputs, outputs, comp.id, comp.indims, comp.outdims)
     return (functype, parentname, compname, inputs, outputs, copiedcomp.evaldict, copiedcomp.graddict)
 
 def optfuncargs_mdao(functype, compid, parentid, complookup, namefromid):
@@ -48,7 +48,7 @@ def optfuncargs_mdao(functype, compid, parentid, complookup, namefromid):
     comp = complookup(compid)
     inputs = namefromid(comp.inputs, VAR, isiter=True)
     output = '{}{}'.format(repr(functype).lower(), compid)
-    newcomp = Component(comp.function, inputs=inputs, outputs=(output,), component=comp.component, indims=comp.indims)
+    newcomp = Component(comp.function, inputs=inputs, outputs=(output,), comp_id=comp.id, indims=comp.indims)
     return (functype, parentname, compname, inputs, output, newcomp.evaldict, newcomp.graddict) 
 
 mapping = {

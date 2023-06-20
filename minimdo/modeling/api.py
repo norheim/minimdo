@@ -80,9 +80,9 @@ def calculateval(invars, fx):
     varval = np.squeeze(fx(*varvals)) #TODO: remove squeeze
     return varval, assumed
 
-def evalexpr(right, unit=None):
+def evalexpr(right, unit=None, override_out_unit=True):
     fx, invars, inpunitsflat = sympy_fx_inputs(right)
-    fxunits = fx_with_units(fx, inpunitsflat, (ureg(unit),), True)
+    fxunits = fx_with_units(fx, inpunitsflat, (ureg(unit),), override_out_unit)
     varval, assumed = calculateval(invars, fxunits)
     dummyvar = Var('dummy', varval, unit)
     dummyvar.assumed = assumed
@@ -97,51 +97,69 @@ def check_for_component(components, expr, outputs):
     else:
         return False
 
+def create_component(comp_id, left, right, args, kwargs):
+    # left could be None in the case that there is no left hand side
+    # right could be either a function or a sympy expression
+    # args and kwargs are arguments that relate to the left variable (e.g. varid, varval, unit)
+    if callable(right):
+        invars = args[0]
+        inunitsflat = tuple(invar.varunit for invar in invars)
+        outunit = kwargs.get('unit', None)
+        outunitsflat = (ureg(outunit),)
+        fx = fx_with_units(right, inunitsflat, outunitsflat, overrideoutunits=True)
+        outvars = (left,)
+        if isinstance(left, str):
+            left = Var(left, unit=outunit)
+        comp = Component(fx, invars, outvars, comp_id=comp_id, arg_mapping=True)
+    else:
+        if isinstance(left, str):
+            left = var_from_expr(left, right, *args, **kwargs)
+        comp = Component.fromsympy(right, left, component=comp_id, arg_mapping=True)
+    return left, comp
+
+def generate_new_component_id(components):
+    ids = [component.id for component in components]
+    newid = max(ids)+1 if ids else 0
+    return newid
+
+def addequation(components, right, *args, **kwargs):
+    # creates a new component if it does not exists, and returns 
+    # the existing component otherwise
+    left, args = args[0], args[1:] if args else None # allows for left to be optional
+    eqcomp = check_for_component(components, right, (left,))
+    comp_isnew = False
+    leftvar = None
+    if not eqcomp:
+        comp_id = kwargs.pop('compname', generate_new_component_id(components))
+        leftvar, eqcomp = create_component(comp_id, left, right, args, kwargs)
+        comp_isnew = True
+    # precompute the value of left if available
+    # if the component already exists it re-evaluates the value of left
+    if leftvar is not None:
+        leftvar.varval, leftvar.assumed = calculateval(eqcomp.mapped_inputs, eqcomp.function)
+
+    return leftvar, comp_isnew, eqcomp
+
 def adda(solver, left, right, *args, **kwargs):
     model = solver.model
-    existing_comp = check_for_component(model.components, right, (left,))
-    if not existing_comp:
-        comp_idx = len(model.Ftree)
-        if callable(right):
-            invars = args[0]
-            inunitsflat = tuple(invar.varunit for invar in invars)
-            outunit = kwargs.get('unit', None)
-            outunitsflat = (ureg(outunit),)
-            fx = fx_with_units(right, inunitsflat, outunitsflat, overrideoutunits=True)
-            outvars = (left,)
-            if isinstance(left, str):
-                left = Var(left, unit=outunit)
-            addvars(model, invars, left)
-            invars_names = tuple(str(var) for var in invars)
-            comp = Component(fx, invars_names, outvars, component=comp_idx)
-        else:
-            if isinstance(left, str):
-                left = var_from_expr(left, right, *args, **kwargs)
-            addvars(model, right.free_symbols, left)
-            comp = Component.fromsympy(right, left, component=comp_idx)
-            invars = right.free_symbols
-        # precompute the value of left if available
-        left.varval, left.assumed = calculateval(invars, comp.function)
-        model.components.append(comp)
-        model.comp_by_var[left]=comp_idx
+    leftvar, comp_isnew, eqcomp = addequation(model.components, right, left, *args, **kwargs)
+    if comp_isnew:
+        addvars(model, eqcomp.mapped_inputs, leftvar)
+        model.components.append(eqcomp)
+        model.comp_by_var[left] = eqcomp.id
     else:
-        comp_idx = existing_comp.component
-        left = model.idmapping[existing_comp.outputs[0]]
-    model.Ftree[comp_idx] = solver.idx
-    return left
+        leftvar = model.idmapping[eqcomp.outputs[0]]
+    model.Ftree[eqcomp.id] = solver.idx
+    return leftvar
 
 def addf(solver, right, name=None):
     model = solver.model
-    existing_comp = check_for_component(model.components, right, (None,))
-    if not existing_comp:
-        comp_idx = name if name else len(model.Ftree)
-        comp = Component.fromsympy(right, component=comp_idx)
-        addvars(model, right.free_symbols)
-        model.components.append(comp)
-    else:
-        comp_idx = existing_comp.component
-    model.Ftree[comp_idx] = solver.idx
-    return comp_idx
+    leftvar, comp_isnew, eqcomp = addequation(model.components, right, name=name)
+    if comp_isnew:
+        addvars(model, eqcomp.mapped_inputs, leftvar)
+        model.components.append(eqcomp)
+    model.Ftree[eqcomp.id] = solver.idx
+    return eqcomp.id
 
 def addsolver(solver, comps=None, solvefor=None, name=None, idbyname=False):
     comps = comps if comps else []

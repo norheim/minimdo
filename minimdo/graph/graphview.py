@@ -35,7 +35,7 @@ def draw(g, pos=None, edge_color='k', width=2, arc=None, figsize=(6,6),
         label_kwargs['bbox'] = dict(facecolor="white", edgecolor='black', boxstyle='round,pad=0.2')
 
     
-    labels = OrderedDict([(elt,generate_label(elt, latexlabel=latexlabels)) for elt in g.nodes])
+    labels = OrderedDict([(elt,generate_label(str(elt), latexlabel=latexlabels)) for elt in g.nodes])
     if pos is None:
         pos = nx.drawing.nx_pydot.graphviz_layout(g, prog=prog, **kwargs)
     fig = plt.figure(figsize=figsize)

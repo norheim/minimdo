@@ -3,7 +3,7 @@ from graph.workflow import OBJ, NEQ, EQ
 from itertools import islice
 class Impcomp(om.ImplicitComponent):
     def initialize(self):
-        self.options.declare('components')
+        self.options.declare('components', recordable=False)
          
     def setup(self):
         components = self.options['components']
@@ -32,13 +32,13 @@ class Impcomp(om.ImplicitComponent):
 
 class Expcomp(om.ExplicitComponent):
     def initialize(self):
-        self.options.declare('component')
-        self.options.declare('debug')
+        self.options.declare('component', recordable=False)
+        self.options.declare('debug', recordable=False)
 
     def setup(self):
         input_names, output_names, _, _ = self.options['component']
         for output_name in output_names:
-            self.add_output(output_name)
+            self.add_output(output_name, lower=-1e3, upper=1e3)
         for name in input_names:
             self.add_input(name, val=1.) # add them in the order we lambdify
         self.declare_partials(output_name, input_names)

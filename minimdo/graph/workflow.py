@@ -12,7 +12,7 @@ EXPL, IMPL, EQ, NEQ, OBJ, SOLVE, OPT = ExecutionTypes.EXPL,ExecutionTypes.IMPL,E
 
 def get_f(f, edges):
     #TODO: ensure that elt.inputs is of same type as Ein[comp], eg. str
-    f_lookup = {(frozenset(elt.inputs),elt.component,frozenset(elt.outputs)): elt for elt in f}
+    f_lookup = {(frozenset(elt.inputs), elt.id, frozenset(elt.outputs)): elt for elt in f}
     Ein = merge_edges(edges[0], edges[2])
     Eout = edges[1]
     def lookup(comp):

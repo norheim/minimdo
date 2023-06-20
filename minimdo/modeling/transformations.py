@@ -28,6 +28,11 @@ def partial_inversion(old_expression, old_output=None, new_output=None, flatten_
         else:
             return diff
 
+def flatten_component(comp, newid=None, flatten_residuals=False):
+    new_function_expression = partial_inversion(comp.fxdisp, comp.mapped_outputs[0], flatten_residuals=flatten_residuals) # flatten_residuals to false is required for unit conversion to work further down
+    newcomp = Component.fromsympy(new_function_expression, ignoretovar=True, component=newid, arg_mapping=True)
+    return newcomp
+
 def var_from_mapping(arg_mapping, Eout, comp):
     if Eout[comp][0] is not None:
         return arg_mapping[Eout[comp][0]]

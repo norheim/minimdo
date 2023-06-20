@@ -130,11 +130,12 @@ def plot_incidence_matrix(A, column_labels, row_labels, pad=None, **kwargs):
 def render_incidence(edges, tree, namingfunc=None, displaysolver=True, rawvarname=False, dsm=False, **kwargs):
     if namingfunc is None:
         varnameformat = '{}' if rawvarname else'x_{{{}}}'
-        nodetyperepr = {VAR: varnameformat, COMP: 'f_{{{}}}', SOLVER: 's_{{{}}}'}
+        nodetyperepr = {VAR: varnameformat, COMP: 'Eq. {{{}}}', SOLVER: 's_{{{}}}'}
         namingfunc = namefromid(nodetyperepr)
     patchwidth = kwargs.pop('patchwidth', 2)
     sequence, permutation, Ein, Eout, solver_iterator = incidence_artifacts(edges, tree, displaysolver)
-    A = generate_incidence_matrix(Ein, Eout, sequence, permutation)
+    diagonalgray = kwargs.pop('diagonalgray', True)
+    A = generate_incidence_matrix(Ein, Eout, sequence, permutation, diagonalgray=diagonalgray)
     column_labels = ['${}$'.format(namingfunc(var, VAR)) for var in permutation]
     dispendcomp = kwargs.pop('dispendcomp', False)
     row_labels = ['${}$'.format('h_{{{}}}'.format(fx) if is_end_comp(Eout, fx, dispendcomp) else namingfunc(fx, COMP) ) for fx in sequence]

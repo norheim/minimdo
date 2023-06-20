@@ -7,6 +7,11 @@ import networkx as nx
 def filter_solver_comps(x):
     return x.nodetype in [COMP, SOLVER]
 
+def invert_comp(input_vars, old_output_vars=None, new_output_vars=None):
+    Ein_new = tuple(elt for elt in chain(input_vars, old_output_vars if old_output_vars else []) if elt != new_output_vars and elt != None)
+    Eout_new = (new_output_vars,)
+    return Ein_new, Eout_new
+
 def invert_edges(Ein, Eout=None, newout=None):
     newout = newout if newout else {}
     all_comps = all_components(Ein)
@@ -14,8 +19,7 @@ def invert_edges(Ein, Eout=None, newout=None):
     Eout_new = defaultdict(tuple)
     for comp in all_comps:
         outvar = newout.get(comp,None)
-        Ein_new[comp] = tuple(elt for elt in chain(Ein[comp], Eout[comp] if Eout else []) if elt != outvar and elt != None)
-        Eout_new[comp] = (outvar,)
+        Ein_new[comp], Eout_new[comp] = invert_comp(Ein[comp], Eout[comp] if Eout else None, outvar)
     return dict(Ein_new), dict(Eout_new), {}
 
 def eqv_to_edges_tree(Ein, output_set=None, n_eqs=None, offset=True):
