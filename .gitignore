@@ -9,6 +9,7 @@ figures
 *.png
 *.sqlite
 */datastructures/__pycache__/
+*/minimdo.egg-info/
 *.html
 *.out
 *.pdf
