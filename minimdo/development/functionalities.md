@@ -3,7 +3,7 @@
 Assume we have $x=(x_1,x_2,x_3,x_4,x_5)$, a vector in 5-dimensional (real) space. 
 
 ## A first subspace
-Now we have a set $S_1$ that describes a subspace of the 5-dimensional space: the subset of points satisfying the following equations:
+Now we have a set $S_1$ that describes a subspace of the 5-dimensional space: the subset of points satisfying the following equations (I'm not going to try to visualize the five dimensional hypersurface to you):
 
 $$
 \begin{align*}
@@ -12,7 +12,9 @@ x_2x_3x_5 -1 &= 0
 \end{align*}
 $$
 
-Now this subset has an infinite number of points. However, if we fix one of the dimensions, say $x_5=2$, we get a system of two equations in two variables, for which a finite number of (real) solutions (potentially zero) should exist. This library has been designed for when we can assume that $S_1$ actually has one solution for each value of $x_5$ in some domain. We will say that $x_5$ parametrizes the set $S_1$. We might want to query the solutions for many different points. Let's show how to do this with the library:
+Now this subset has an infinite number of points. However, if we fix one of the dimensions, say $x_5=2$(i.e. take the intersection of $S_1$ with the hyperplane $x_5=2$), we get a system of two equations in two variables, for which a finite number of (real) solutions (potentially zero) should exist. 
+
+This Python library has been designed for when we can assume that $S_1$ actually has one solution for each value of $x_5$ in some domain. *We will say that $x_5$ parametrizes the set $S_1$*. Let's say we want to query the solutions at different values for $x_5$. Let's show how to do this with the library:
     
 ```python   
 # This syntax will seem familiar to SymPy users
