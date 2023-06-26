@@ -54,8 +54,10 @@ def default_solver_options(tree, solvers_options=None):
         solvers_options[solver]['designvars'] = tuple(solver_children(Vtree, solver))
     return solvers_options
 
-def order_from_tree(Ftree, Stree, Eout, includesolver=True, mergeendcomp=True):
-    endcomps = {key: None in var for key,var in Eout.items()}
+#TODO: Eout input should be different to make this code more modular
+def order_from_tree(Ftree, Stree, Eout=None, includesolver=True, mergeendcomp=True):
+    Eout = Eout if Eout is not None else dict()
+    endcomps = {key for key in Ftree.keys() if None in Eout.get(key, (None,))}
     visited_solvers = set()
     #allsolvers = all_solvers(Stree)
     sequence = []
@@ -69,7 +71,7 @@ def order_from_tree(Ftree, Stree, Eout, includesolver=True, mergeendcomp=True):
         visited_solvers = visited_solvers.union(reverse_ancestors)
         if includesolver:
             sequence += [(SOLVER, solver, Stree.get(solver,None)) for solver in reverse_ancestors]
-        if endcomps[component]:
+        if component in endcomps:
             endcompqueue[parent].append(component)
         else:
             sequence += [(COMP, component, parent)]
