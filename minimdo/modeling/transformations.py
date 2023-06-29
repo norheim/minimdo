@@ -69,8 +69,8 @@ def transform_components(oldedges, newedges, components, arg_mapping):
     # This is just to make sure that the new edges have an isomorphic undirected graph, which should be the case
     _, newEout = edges_to_Ein_Eout(newedges)
     new_components = []
-    for comp in (comp for comp in components if comp.component in all_component_nodes(oldedges)): # could have also used newedges
-        compid = comp.component
+    for comp in (comp for comp in components if comp.id in all_component_nodes(oldedges)): # could have also used newedges
+        compid = comp.id
         old_out = var_from_mapping(arg_mapping, Eout, compid)
         new_out = var_from_mapping(arg_mapping, newEout, compid) 
         if old_out != new_out:
@@ -79,6 +79,6 @@ def transform_components(oldedges, newedges, components, arg_mapping):
             if new_out == None: # to still cary out the unit conversion
                 ignoretovar = True 
                 new_out = old_out
-            newcomponent = Component.fromsympy(new_function_expression, new_out, ignoretovar=ignoretovar, component=compid)
+            newcomponent = Component.fromsympy(new_function_expression, new_out, ignoretovar=ignoretovar, component=compid, arg_mapping=True)
             new_components.append(newcomponent)
     return new_components

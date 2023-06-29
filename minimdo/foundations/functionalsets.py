@@ -122,7 +122,7 @@ class ResidualSet(ProjactableSet):
         self.components = components if components is not None else list()
         self.variables = unique_components_variables(self.components)
     
-    def project(self, projected_variable):
+    def project(self, projected_variable=None):
         # inverted_components = [component.invert() for component in self.components]
         F = Functional(projectable=self, projected=projected_variable)
         F.solver = DefaultResidualSolver(F)

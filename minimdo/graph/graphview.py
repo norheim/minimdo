@@ -60,7 +60,7 @@ def circular_vars(graph, eqs):
 def drawfull(graph, eqs, prog='neato', figsize=(6,6)):
     draw(graph, node_shape=circular_vars(graph, eqs), latexlabels=False, arc=0.1, prog=prog, figsize=figsize);
 
-def drawbipartite(g, left_nodes=None, M=None):
+def drawbipartite(g, left_nodes=None, M=None, figsize=(4,5), **kwargs):
     if left_nodes is None:
         left_nodes,_ = nx.bipartite.sets(g)
     pos = nx.drawing.layout.bipartite_layout(g, left_nodes)
@@ -68,7 +68,7 @@ def drawbipartite(g, left_nodes=None, M=None):
         for n1, n2 in g.edges()] if M else None
     edge_width = [4 if n1 in M and M[n1]==n2 else 2 
         for n1, n2 in g.edges()] if M else None
-    draw(g, pos, edge_color, edge_width, figsize=(4,5))
+    draw(g, pos, edge_color, edge_width, figsize=figsize, **kwargs)
 
 def bipartite_repr(eqvars):
     edges = [(inp, eq) for eq, inps in eqvars.items() for inp in inps]
