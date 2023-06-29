@@ -95,7 +95,10 @@ class Functional():
 
 class FunctionalComp(Functional):
     def __init__(self, comp, name=None, problemid=None) -> None:
-        residual_comp = flatten_component(comp)
+        if None in comp.outputs:
+            residual_comp = comp
+        else:
+            residual_comp = flatten_component(comp)
         projectable = ResidualSet([residual_comp])
         super().__init__(projectable, tuple(comp.mapped_inputs), name, problemid)
         self.independent = tuple(comp.mapped_outputs) #overwrite just in case
