@@ -1,5 +1,6 @@
 from modeling.compute import prettyprintval, prettyprintunit
 import pandas as pd
+import numpy as np
 from graph.graphutils import VAR
 from graph.matrixview import incidence_artifacts
 
@@ -29,6 +30,13 @@ def update_varval(model, prob, namingfunc, varnames=None):
     for var in var_refs:
         var.varval = prob.get_val(namingfunc(var.varid, VAR))[0]
         var.assumed = {key2: prob.get_val(namingfunc(key2.varid, VAR))[0] for key2 in var.assumed.keys()}
+
+def print_output_mdao(prob):
+    d = {elt['prom_name']: (np.asscalar(elt['value']) 
+     if elt['value'].squeeze().ndim==0 else elt['value'])
+      for _,elt in prob.model.list_outputs(out_stream=None, 
+                                 prom_name=True)}
+    return d
 
 def print_vars_in_order(prob, edges, tree, var_mapping):
     d = {varn:prob.get_val(varn) for _,(_,varn) in var_mapping.items()}

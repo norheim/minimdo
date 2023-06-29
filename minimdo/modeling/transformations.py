@@ -3,6 +3,7 @@ from modeling.execution import Component
 import sympy as sp
 import networkx as nx
 import numpy as np
+import jax.numpy as anp
 
 def partial_inversion(old_expression, old_output=None, new_output=None, flatten_residuals=True):
     # old_expression needs to be a sympy expr
@@ -31,20 +32,21 @@ def partial_inversion(old_expression, old_output=None, new_output=None, flatten_
 
 def flatten_output(scalar_or_array):
     return (np.array(scalar_or_array).flatten() 
-            if isinstance(scalar_or_array, np.ndarray) 
-            else np.atleast_1d(scalar_or_array))
+            if isinstance(scalar_or_array, (np.ndarray, list)) 
+            else np.array([scalar_or_array]))
     
 def flatten_component(comp, newid=None):
     new_inputs = comp.inputs + comp.outputs
     get_inputs = lambda args: args[:len(comp.inputs)]
     get_outputs = lambda args: args[len(comp.inputs):]
-    new_function = lambda *args: np.concatenate([
-        flatten_output(outval)-get_outputs(args)[idx] 
-        for idx,outval in enumerate(comp.function(*get_inputs(args)))])
+    new_function = lambda *args: [-anp.hstack(
+        comp.function(*get_inputs(args)))+anp.hstack(get_outputs(args))]
     new_indims = comp.indims + comp.outdims
-    new_outdims = sum(sum(outdim) if isinstance(outdim, tuple) 
-                      else outdim for outdim in comp.outdims)
-    new_fxdisp = '[{}-{}]'.format(str(comp.outputs), comp.fxdisp) if comp.fxdisp is not None else None
+    new_outdims = (sum(sum(outdim) if isinstance(outdim, tuple) 
+                      else outdim for outdim in comp.outdims),)
+    new_fxdisp = '{}-({})'.format(comp.outputs[0] if len(comp.outputs)==1 
+                                else str(list(comp.outputs)), 
+                                comp.fxdisp) if comp.fxdisp is not None else None
     if newid is None:
         newid = comp.id
     new_comp = Component(new_function, new_inputs, (None,), newid, 

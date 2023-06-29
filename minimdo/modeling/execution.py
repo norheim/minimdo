@@ -128,7 +128,7 @@ class Component():
         if not arg_mapping: # only pass through the id's
             inputs = tuple(inp.varid for inp in inputs)
             if outputs[0] is not None:
-                outputs = outputs[0].varid
+                outputs = (outputs[0].varid,)
         return cls(fx, inputs, outputs, component, fxdisp=expr, arg_mapping=arg_mapping)
 
     def evaldict(self, indict):

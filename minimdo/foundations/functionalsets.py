@@ -28,7 +28,8 @@ class DefaultResidualSolver():
 
     def residuals(self, input_dict=None):
         projectable = self.functional.projectable
-        return np.concatenate([np.atleast_1d(res.evaldict(input_dict)) for res in projectable.components])
+        return np.hstack([res.evaldict(input_dict) 
+                          for res in projectable.components]).flatten()
 
     def generate_residual(self, input_dict=None) -> Callable:
         local_dict = input_dict.copy()
