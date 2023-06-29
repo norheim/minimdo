@@ -148,10 +148,19 @@ def comp_id_lookup(comps):
         comp_ids[comp.id].append(comp)
     return {key: var[0] if len(var)==1 else var for key,var in comp_ids.items()}
 
-def edges_from_components(comps):
+def isparameter(obj):
+    if obj is not None:
+        return obj.always_input
+    else:
+        return False
+
+def edges_from_components(comps, include_par=True):
     Ein,Eout = dict(),dict()
     for comp in comps:
-        Ein[comp.id] = comp.inputs
+        Ein[comp.id] = tuple(elt for elt in comp.inputs if 
+                        (include_par or 
+                         not isparameter(
+            comp.arg_mapping.get(elt,None)))) #Lazy boolean evaluation
         Eout[comp.id] = comp.outputs
     return Ein, Eout, dict()
 

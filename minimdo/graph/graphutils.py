@@ -187,7 +187,6 @@ def upstream(edges, comp):
     q = [(comp,True)]
     v = []
     while q:
-        c+=1
         node, is_comp = q.pop()
         E = Ein if is_comp else Eoutrev
         children = [elt for elt in product(E[node], [not is_comp]) if elt not in v]

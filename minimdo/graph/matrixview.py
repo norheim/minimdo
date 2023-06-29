@@ -1,5 +1,9 @@
 from collections import defaultdict
-from graph.graphutils import (edges_to_Ein_Eout, all_variables, all_components, dfs_tree, end_components, root_solver, solver_children, VAR, COMP, SOLVER, namefromid)
+from graph.graphutils import (edges_to_Ein_Eout, all_variables, 
+                              all_components, dfs_tree, end_components, 
+                              root_solver, solver_children, 
+                              VAR, COMP, SOLVER, namefromid)
+from graph.graphutils import path
 from graph.workflow import order_from_tree, ENDCOMP, COMP
 import matplotlib.patches as patches
 import numpy as np
@@ -127,7 +131,16 @@ def plot_incidence_matrix(A, column_labels, row_labels, pad=None, **kwargs):
         ax.tick_params(axis=u'both', which=u'both',length=0)
     return fig, ax 
 
-def render_incidence(edges, tree, namingfunc=None, displaysolver=True, rawvarname=False, dsm=False, **kwargs):
+def indentspace(fx, tree, indentsolver=False):
+    indentation = ''
+    if indentsolver:
+        parent = tree[0][fx]
+        spaces = len(path(tree[1], parent))-1
+        indentation = '\|- \\ '*spaces
+    return indentation 
+
+def render_incidence(edges, tree, namingfunc=None, displaysolver=True, 
+                     rawvarname=False, dsm=False, indentsolver=False, **kwargs):
     if namingfunc is None:
         varnameformat = '{}' if rawvarname else'x_{{{}}}'
         nodetyperepr = {VAR: varnameformat, COMP: 'Eq. {{{}}}', SOLVER: 's_{{{}}}'}
@@ -138,7 +151,9 @@ def render_incidence(edges, tree, namingfunc=None, displaysolver=True, rawvarnam
     A = generate_incidence_matrix(Ein, Eout, sequence, permutation, diagonalgray=diagonalgray)
     column_labels = ['${}$'.format(namingfunc(var, VAR)) for var in permutation]
     dispendcomp = kwargs.pop('dispendcomp', False)
-    row_labels = ['${}$'.format('h_{{{}}}'.format(fx) if is_end_comp(Eout, fx, dispendcomp) else namingfunc(fx, COMP) ) for fx in sequence]
+    row_labels = ['${}{}$'.format(indentspace(fx, tree, indentsolver), 'h_{{{}}}'.format(fx) 
+                                if is_end_comp(Eout, fx, dispendcomp) 
+                                else namingfunc(fx, COMP)) for fx in sequence]
     if dsm:
         row_labels = column_labels[:len(row_labels)]
     fig, ax =plot_incidence_matrix(A, column_labels, row_labels, **kwargs)
