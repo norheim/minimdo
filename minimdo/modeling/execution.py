@@ -72,7 +72,7 @@ def component_hash(algebraic_expr, outputs):
 class Component():
     def __init__(self, fx, inputs=None, outputs=None, comp_id=None, indims=None, outdims=None, fxdisp=None, arg_mapping=None):
         if arg_mapping == True:
-            arg_mapping = {str(var):var for var in inputs+outputs}
+            arg_mapping = {str(var):var for var in inputs+outputs if var is not None}
             inputs = tuple(str(var) for var in inputs)
             outputs = tuple(str(var) if var is not None else None for var in outputs)
         #assert len(set(inputs).intersection(outputs))==0
