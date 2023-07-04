@@ -1,4 +1,4 @@
-# Functionality
+# Functional representable sets (Functionals)
 
 Assume we have $x=(x_1,x_2,x_3,x_4,x_5)$, a vector in 5-dimensional (real) space. 
 
@@ -14,7 +14,7 @@ $$
 
 Now this subset has an infinite number of points. However, if we fix one of the dimensions, say $x_5=2$(i.e. take the intersection of $S_1$ with the hyperplane $x_5=2$), we get a system of two equations in two variables, for which a finite number of (real) solutions (potentially zero) should exist. 
 
-This Python library has been designed for when we can assume that $S_1$ actually has one solution for each value of $x_5$ in some domain. *We will say that $x_5$ parametrizes the set $S_1$*. Let's say we want to query the solutions at different values for $x_5$. Let's show how to do this with the library:
+This Python library has been designed for when we can assume that $S_1$ actually has one solution for each value of $x_5$ in some domain. *We will say that* $x_5$ *parametrizes the set* $S_1$. Let's say we want to query the solutions at different values for $x_5$. Let's show how to do this with the library:
     
 ```python   
 # This syntax will seem familiar to SymPy users
