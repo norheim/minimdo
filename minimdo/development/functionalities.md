@@ -3,7 +3,7 @@
 Assume we have $x=(x_1,x_2,x_3,x_4,x_5)$, a vector in 5-dimensional (real) space. 
 
 ## A first subspace
-Now we have a set $S_1$ that describes a subspace of the 5-dimensional space: the subset of points satisfying the following equations (I'm not going to try to visualize the five dimensional hypersurface to you):
+Now we have a set $S_1$ that describes a subspace of the 5-dimensional space: the subset of points satisfying the following equations:
 
 $$
 \begin{align*}
@@ -32,7 +32,8 @@ Alternativaly we could have thought of $S_1$ as the intersection of two sets: $H
 
 
 ```python
-F_eq2_x2 = ResidualSet([eq2]).project((x_3, x_5))
+H_2 = ResidualSet([eq2])
+F_eq2_x2 = H_2.project((x_3, x_5))
 F_elim = EliminationKeepSet([eq1], eliminate=F_eq2_x2).project((x_5,))
 F_elim.solve({x_5: 2})
 # returns {x_3: 0.37, x_2: 1.37}

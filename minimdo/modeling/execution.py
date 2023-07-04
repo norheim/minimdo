@@ -116,7 +116,8 @@ class Component():
         return cls(lfx, inputs, **kwargs)
 
     @classmethod
-    def fromsympy(cls, expr, tovar=None, ignoretovar=False, component=None, arg_mapping=None):
+    def fromsympy(cls, expr, tovar=None, ignoretovar=False, 
+                  component=None, arg_mapping=None):
         fx, inputs, inpunitsflat = sympy_fx_inputs(expr)
         outputs = (tovar,) if tovar and not ignoretovar else (None,) 
         if tovar and not isinstance(type(expr), sp.core.function.UndefinedFunction):# and hasattr(expr, 'dimensionality'): 
@@ -129,7 +130,8 @@ class Component():
             inputs = tuple(inp.varid for inp in inputs)
             if outputs[0] is not None:
                 outputs = (outputs[0].varid,)
-        return cls(fx, inputs, outputs, component, fxdisp=expr, arg_mapping=arg_mapping)
+        return cls(fx, inputs, outputs, component, 
+                   fxdisp=expr, arg_mapping=arg_mapping)
 
     def evaldict(self, indict):
         return self.function(*args_in_order(indict, self.mapped_inputs))
