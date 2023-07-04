@@ -78,13 +78,14 @@ F3.solve({x_5: 2})
 
 ### Method 2
 We could instead solve the larger system of equations:
+
 $$
-\begin{aligned}
+\begin{align*}
 x_2^2 + x_3^2 -2 &= 0 \\
 x_2x_3x_5 -1 &= 0 \\
 x_3^2+x_2^2 + 1 - x_1^2 &= 0 \\
 10+x_2+x_3-x_1-x_5-x_4 &= 0\\
-\end{aligned}
+\end{align*}
 $$
 
 ```python
