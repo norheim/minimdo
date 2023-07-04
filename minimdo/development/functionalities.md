@@ -45,8 +45,8 @@ We now have a second set $S_2$, the subset of points satisfying the following eq
 
 $$
 \begin{align*}
-x_1 &= x_3^2+x_2^2+1 \\
-x_4 &= 10-x_2-x_3-x_1-x_5\\
+x_1 &= \sqrt{x_3^2+x_2^2+1} \\
+x_4 &= 10+x_2+x_3-x_1-x_5\\
 \end{align*}
 $$
 
@@ -79,12 +79,12 @@ F3.solve({x_5: 2})
 ### Method 2
 We could instead solve the larger system of equations:
 $$
-\begin{align*}
+\begin{aligned}
 x_2^2 + x_3^2 -2 &= 0 \\
 x_2x_3x_5 -1 &= 0 \\
-x_3^2+x_2^2 + 1 - x_1 &= 0 \\
+x_3^2+x_2^2 + 1 - x_1^2 &= 0 \\
 10+x_2+x_3-x_1-x_5-x_4 &= 0\\
-\end{align*}
+\end{aligned}
 $$
 
 ```python
