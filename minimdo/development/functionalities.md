@@ -28,7 +28,7 @@ F1.solve({x_5: 2})
 # returns {x_3: 0.366, x_2: 1.366}
 ```
 
-Alternativaly we could have thought of $S_1$ as the intersection of two sets: $H_1$ and $H_2$, where $H_1$ is the set of points satisfying $x_2^2 + x_3^2 -2 = 0$ and $H_2$ is the set of points satisfying $x_2x_3x_5 -1 = 0$. If we fix two of the dimensions of $x$: $x_3$ and $x_5$, we get one equation with one variable, and we can similarly turn it into an object that we can query for many such combinations of $x_3$ and $x_5$. Now we could use this function to eliminate $x_2$ in the equation for the second set $H_2$, and now get again an equation with one variable, $x_3$, and solve for any $x_3$ given an $x_5$:
+Alternativaly we could have thought of $S_1$ as the intersection of two sets: $H_1$ and $H_2$, where $H_1$ is the set of points satisfying $x_2^2 + x_3^2 -2 = 0$ and $H_2$ is the set of points satisfying $x_2x_3x_5 -1 = 0$. If we fix two of the dimensions for $H_2$, for example $x_3$ and $x_5$, we get one equation with one variable ($x_2$), and we can similarly turn it into an object that we can query for many such combinations of $x_3$ and $x_5$. Now we could use this function to eliminate $x_2$ in the equation for the first set $H_1$, and now get again an equation with one variable, $x_3$, and solve for any $x_3$(and then get $x_2$ by extension) given an $x_5$:
 
 
 ```python
