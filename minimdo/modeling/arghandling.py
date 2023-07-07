@@ -68,13 +68,16 @@ class EncodedFunction():
         return decode(self.f(*args, **{**self.kwargs, **kwargs}), 
                       self.decoder.order, shapes=self.decoder.shapes)
 
-    def dict_in_only(self, d, **kwargs):
+    def dict_in_only(self, d=None, **kwargs):
+        d = d if d is not None else dict()
         return self.f(*encode(d, self.encoder.order), **{**self.kwargs, **kwargs})
     
-    def dict_in_flat_out(self, d, **kwargs):
+    def dict_in_flat_out(self, d=None, **kwargs):
+        d = d if d is not None else dict()
         return flatten_args(self.dict_in_only(d, **{**self.kwargs, **kwargs}))
     
-    def dict_in_dict_out(self, d, **kwargs):
+    def dict_in_dict_out(self, d=None, **kwargs):
+        d = d if d is not None else dict()
         return decode(self.dict_in_only(d, **{**self.kwargs, **kwargs}), 
                       self.decoder.order, shapes=self.decoder.shapes)
     

@@ -105,7 +105,7 @@ class Functional(EncodedFunctionContainer):
         return new_var
 
 def generate_opt_objects(problem, obj, ineq, eq, eliminate):
-    def optimizer_function(*args, x_initial=None, random_generator=None):
+    def optimizer_function(*args, x0=None, random_generator=None):
         parameters_dict = decode(args, problem.encoder.order)
         #@np_cache
         def eval_obj_constraints(x):
@@ -118,16 +118,16 @@ def generate_opt_objects(problem, obj, ineq, eq, eliminate):
             ineqval = ineq.dict_in_flat_out(local_dict)
             eqval = eq.dict_in_flat_out(local_dict)
             return objval, ineqval, eqval
-        x0 = encode(x_initial, problem.decoder.order, flatten=True,
+        x0 = encode(x0, problem.decoder.order, flatten=True,
                 missingarg=random_generator)
         return eval_obj_constraints, x0
     return optimizer_function
 
 def optimizer_solver(problem, obj, ineq, eq, eliminate, bounds):
     obj_generator = generate_opt_objects(problem, obj, ineq, eq, eliminate)
-    def optimizer_function(*args, x_initial=None, random_generator=None):
+    def optimizer_function(*args, x0=None, random_generator=None):
         eval_obj_constraints, x0 = obj_generator(*args, 
-                                                 x_initial=x_initial, 
+                                                 x0=x0, 
                                                  random_generator=random_generator)
         ineq_constraints, eq_constraints = tuple(), tuple()
         if len(ineq.encoded_functions)>= 1:
