@@ -39,9 +39,13 @@ def feed_forward_solver(function_order, functional):
         return out
     return solver_function
 
-def flat_residuals_executable(function_order, functional):
+def flat_residuals_executable(function_order, functional, eliminate=None):
     def residual_function(*args):
         local_dict = decode(args, functional.encoder.order)
+        if eliminate is not None:
+            inter_dict = eliminate.dict_in_dict_out(
+                local_dict)
+            local_dict.update(inter_dict)
         residuals_list = [f.dict_in_flat_out(local_dict) for f in function_order]
         flattened_residuals = flatten_args(residuals_list)
         return flattened_residuals
@@ -68,6 +72,10 @@ class Projectable(EncodedFunctionContainer):
         super().__init__(encoded_functions)
         self.f = flat_residuals_executable(self.encoded_functions, 
                                            self)
+    
+    def eliminate(self, eliminate=None):
+        self.f = flat_residuals_executable(self.encoded_functions, 
+                                           self, eliminate)
 
 def encode_sympy(sympexpr, named_output=None, single_output=False):
     fx_multiple_outputs, inputs, _ = sympy_fx_inputs(sympexpr)
@@ -182,3 +190,14 @@ def intersection(*functionals):
     F.projectable = new_projectable
     F.f = residual_solver(F)
     return F
+
+def eliminate(F, elimination):
+    random_generator = np.random.default_rng(seed=2023).random
+    Felim = Functional(random_generator=random_generator)
+    Felim.add_encoded_functions(*F.encoded_functions)
+    Felim.projectable = F.projectable
+    Felim.projectable.eliminate(elimination)
+    Felim.encoder = merge_encoders(F.encoder, 
+                                   exclude_encoder=elimination.decoder)
+    Felim.f = residual_solver(Felim)
+    return Felim

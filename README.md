@@ -23,7 +23,7 @@ ineq = [3.16-y1, y2-24] # technically represent residual sets
 problem = Problem(obj, ineq, eliminate=F, 
                 {x:[0,10], z1:[0,10], z2:[0,10]}) # bounds
 
-problem.solve(x0={x:1, z1:5, z2:2}) # or seed=10 for random guess
+problem.dict_in_dict_out(x0={x:1, z1:5, z2:2}) # or seed=10 for random guess
 ```
 
 We can also run the AAO/IDF formulation by using the residual set as equality constraints:
