@@ -112,8 +112,7 @@ def generate_opt_objects(problem, obj, ineq, eq, eliminate):
             local_dict = decode(x, problem.decoder.order, unflatten=True)
             local_dict.update(parameters_dict)
             inter_dict = eliminate.dict_in_dict_out(
-                local_dict,
-                random_generator=random_generator)
+                local_dict)
             local_dict.update(inter_dict)
             objval = float(obj.dict_in_only(local_dict))
             ineqval = ineq.dict_in_flat_out(local_dict)
@@ -124,29 +123,31 @@ def generate_opt_objects(problem, obj, ineq, eq, eliminate):
         return eval_obj_constraints, x0
     return optimizer_function
 
-def optimizer_solver(problem, obj, ineq, eq, eliminate):
+def optimizer_solver(problem, obj, ineq, eq, eliminate, bounds):
     obj_generator = generate_opt_objects(problem, obj, ineq, eq, eliminate)
     def optimizer_function(*args, x_initial=None, random_generator=None):
-        eval_obj_constraints, x0 = obj_generator(*args, x_initial=None, random_generator=None)
+        eval_obj_constraints, x0 = obj_generator(*args, 
+                                                 x_initial=x_initial, 
+                                                 random_generator=random_generator)
         ineq_constraints, eq_constraints = tuple(), tuple()
         if len(ineq.encoded_functions)>= 1:
             ineq_function = lambda x: eval_obj_constraints(x)[1][:] #shallow copy
             ineq_constraints = (NonlinearConstraint(ineq_function, 
-                                                  None, 0),)
+                                                  -np.inf, 0),)
         if len(eq.encoded_functions)>= 1:
             eq_function = lambda x: eval_obj_constraints(x)[2][:] #shallow copy
             eq_constraints = (NonlinearConstraint(eq_function, 0, 0),)
         constraints = eq_constraints+ineq_constraints
         obj_function = lambda x: eval_obj_constraints(x)[0]
         solution_obj = minimize(obj_function, x0, 
-                          constraints=constraints)
+                          constraints=constraints, bounds=bounds)
         return solution_obj.x
     return optimizer_function
 
 class Problem(EncodedFunction):
     def __init__(self, obj, ineqs=None, eqs=None, 
                  eliminate=None, bounds=None, parameters=None):
-        super().__init__()
+        super().__init__(None)
         ineqs = ineqs if ineqs is not None else tuple()
         eqs = eqs if eqs is not None else tuple()
         self.obj = encode_sympy(obj, single_output=True)
@@ -155,10 +156,22 @@ class Problem(EncodedFunction):
         encoded_eq_functions = [encode_sympy(eq) for eq in eqs]
         self.eqs = Projectable(encoded_eq_functions)
         self.eliminate = eliminate
-        self.bounds = bounds
-        self.f = optimizer_solver(self, self.obj, self.ineqs, 
-                                  self.eqs, self.eliminate)
         self.decoder = merge_encoders(self.obj.encoder, self.ineqs.encoder, 
                                       self.eqs.encoder, self.eliminate.encoder,
                                       exclude_encoder=self.eliminate.decoder)
         self.encoder = Encoder()
+        bounds = dict() if bounds is None else bounds
+        self.bounds = encode(bounds, self.decoder.order, missingarg=lambda :(None,None)) 
+        self.f = optimizer_solver(self, self.obj, self.ineqs, 
+                                  self.eqs, self.eliminate, self.bounds)
+
+def intersection(*functionals):
+    random_generator = np.random.default_rng(seed=2023).random
+    F = Functional(random_generator=random_generator)
+    F.add_encoded_functions(*functionals)
+    merged_residuals = sum([F.projectable.encoded_functions 
+                            for F in functionals], [])
+    new_projectable = Projectable(merged_residuals)
+    F.projectable = new_projectable
+    F.f = residual_solver(F)
+    return F
