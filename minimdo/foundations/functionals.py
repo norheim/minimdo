@@ -107,13 +107,14 @@ class Functional(EncodedFunctionContainer):
 def generate_opt_objects(problem, obj, ineq, eq, eliminate):
     def optimizer_function(*args, x0=None, random_generator=None):
         parameters_dict = decode(args, problem.encoder.order)
-        #@np_cache
+        @np_cache
         def eval_obj_constraints(x):
             local_dict = decode(x, problem.decoder.order, unflatten=True)
             local_dict.update(parameters_dict)
-            inter_dict = eliminate.dict_in_dict_out(
-                local_dict)
-            local_dict.update(inter_dict)
+            if eliminate.f is not None:
+                inter_dict = eliminate.dict_in_dict_out(
+                    local_dict)
+                local_dict.update(inter_dict)
             objval = float(obj.dict_in_only(local_dict))
             ineqval = ineq.dict_in_flat_out(local_dict)
             eqval = eq.dict_in_flat_out(local_dict)
@@ -144,6 +145,14 @@ def optimizer_solver(problem, obj, ineq, eq, eliminate, bounds):
         return solution_obj.x
     return optimizer_function
 
+def sympy_or_projectable(object_list=None):
+    if isinstance(object_list, Projectable):
+        return object_list
+    else:
+        object_list = object_list if object_list is not None else tuple()
+        encoded_eq_functions = [encode_sympy(eq) for eq in object_list]
+        return Projectable(encoded_eq_functions)
+
 class Problem(EncodedFunction):
     def __init__(self, obj, ineqs=None, eqs=None, 
                  eliminate=None, bounds=None, parameters=None):
@@ -151,11 +160,9 @@ class Problem(EncodedFunction):
         ineqs = ineqs if ineqs is not None else tuple()
         eqs = eqs if eqs is not None else tuple()
         self.obj = encode_sympy(obj, single_output=True)
-        encoded_ineq_functions = [encode_sympy(ineq) for ineq in ineqs]
-        self.ineqs = Projectable(encoded_ineq_functions)
-        encoded_eq_functions = [encode_sympy(eq) for eq in eqs]
-        self.eqs = Projectable(encoded_eq_functions)
-        self.eliminate = eliminate
+        self.ineqs = sympy_or_projectable(ineqs)
+        self.eqs = sympy_or_projectable(eqs)
+        self.eliminate = eliminate if eliminate is not None else EncodedFunction(None)
         self.decoder = merge_encoders(self.obj.encoder, self.ineqs.encoder, 
                                       self.eqs.encoder, self.eliminate.encoder,
                                       exclude_encoder=self.eliminate.decoder)
