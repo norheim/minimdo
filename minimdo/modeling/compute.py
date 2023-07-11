@@ -85,6 +85,9 @@ class Var(sp.core.Symbol):
     def _repr_latex_(self):
         return '${}$'.format(self.custom_latex_repr())
 
+def create_vars(string, split=' '):
+    return [Var(elt) for elt in string.split(split)]
+
 class Par(Var):
     _ids = count(0)
     def __new__(self, *args, **kwargs):

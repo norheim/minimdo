@@ -6,21 +6,20 @@ def flatten_args(args):
                            for arg in args]) if len(args) 
                            > 0 else np.array([]))
 
-def scalar_if_possible(array_or_float):
-    squeezed = np.squeeze(array_or_float)
-    if squeezed.ndim == 0:
-        squeezed = squeezed.item()
-    return squeezed
+def scalar_if_possible(array_or_float, cleanup=False):
+    if cleanup: #bypass if no cleanup
+        array_or_float = np.squeeze(array_or_float)
+        if array_or_float.ndim == 0:
+            array_or_float = array_or_float.item()
+    return array_or_float
 
-def unflatten_args(x, shapes=None, cleanup=False):
+def unflatten_args(x, shapes=None):
     unflattened = tuple()
     for shape in shapes:
         size = np.prod(shape)
         reshaped = x[:size]
         if size > 1:
             reshaped = reshaped.reshape(shape)
-        if cleanup:
-            reshaped = scalar_if_possible(reshaped)
         unflattened += (reshaped,)
         x = x[size:]
     return unflattened
@@ -37,8 +36,8 @@ def decode(x, order, shapes=None, unflatten=False, cleanup=False):
     if shapes is None:
         shapes = [(1,) for _ in order]
     if unflatten:
-        x = unflatten_args(x, shapes, cleanup)
-    return {var: x[idx] for idx, var in enumerate(order)}
+        x = unflatten_args(x, shapes)
+    return {var: scalar_if_possible(x[idx], cleanup) for idx, var in enumerate(order)}
 
 class Encoder():
     def __init__(self, order=None, shapes=None, parent=None):
@@ -57,6 +56,13 @@ def merge_encoders(*encoders, exclude_encoder=None):
                 shapes += (shape,)
     return Encoder(order, shapes, parent=None)
 
+def encoder_diff(encoder, splitter_encoder):
+    keep_encoder = [(elt,shape) for elt, shape in 
+                    zip(encoder.order, encoder.shapes) 
+                    if elt not in splitter_encoder.order]
+    order, shapes = zip(*keep_encoder)
+    return Encoder(order, shapes, parent=None)
+
 class EncodedFunction():
     def __init__(self, f, encoder=None, decoder=None, **kwargs):
         self.f = f
@@ -64,9 +70,9 @@ class EncodedFunction():
         self.encoder = encoder if encoder is not None else Encoder()
         self.decoder = decoder if decoder is not None else Encoder()
 
-    def dict_out_only(self, *args, **kwargs):
+    def dict_out_only(self, *args, cleanup=False, **kwargs):
         return decode(self.f(*args, **{**self.kwargs, **kwargs}), 
-                      self.decoder.order, shapes=self.decoder.shapes)
+                      self.decoder.order, shapes=self.decoder.shapes, cleanup=cleanup)
 
     def dict_in_only(self, d=None, **kwargs):
         d = d if d is not None else dict()
@@ -76,10 +82,14 @@ class EncodedFunction():
         d = d if d is not None else dict()
         return flatten_args(self.dict_in_only(d, **{**self.kwargs, **kwargs}))
     
-    def dict_in_dict_out(self, d=None, **kwargs):
+    def flat_in_only(self, x, **kwargs):
+        return self.f(*unflatten_args(x, self.encoder.shapes), 
+                      **{**self.kwargs, **kwargs})
+               
+    def dict_in_dict_out(self, d=None, cleanup=False, **kwargs):
         d = d if d is not None else dict()
         return decode(self.dict_in_only(d, **{**self.kwargs, **kwargs}), 
-                      self.decoder.order, shapes=self.decoder.shapes)
+                      self.decoder.order, shapes=self.decoder.shapes, cleanup=cleanup)
     
     def __repr__(self) -> str:
         return '{} <- {}'.format(str(self.decoder.order), 
