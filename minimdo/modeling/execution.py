@@ -7,6 +7,7 @@ import sympy as sp
 from jax import jacobian
 from modeling.unitutils import fx_with_units
 from modeling.compute import ureg
+from graph.graphutils import transform_E, filter_comps
 
 import jax
 jax.config.update('jax_platform_name', 'cpu')
@@ -55,6 +56,18 @@ def partialfx(fx, input_names):
         else:
             return fx(*args)
     return wrapper
+
+def sympy_to_edges(sympy_eqs, tvar, filterto=None):
+    Ein, Eout = dict(), dict()
+    for idx,(right,left) in enumerate(sympy_eqs):
+        Ein[idx] = (tuple(elt for elt in left.free_symbols 
+                          if filterto(elt)) 
+                          if left is not None else (None,))
+        Eout[idx] = (tuple(elt for elt in right.free_symbols 
+                           if filterto(elt)) 
+                           if right is not None else (None,))
+    return (transform_E(Ein,tvar=tvar), 
+    transform_E(Eout,tvar=tvar), dict())
 
 def sympy_fx_inputs(expr, library=None):
     inputs = tuple(expr.free_symbols)

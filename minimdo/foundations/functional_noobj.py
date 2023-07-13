@@ -95,19 +95,33 @@ def residual_solver(encoded_function, solve_vars_encoder,
              random_generator=random_generator)
     return EncodedFunction(function, RC.encoder, solve_vars_encoder)
 
+def external_encoder(f, decoder):
+    def function(x):
+        d = decode(x, decoder.order, decoder.shapes, unflatten=True)
+        return f.dict_in_only(d)
+    return function
+
 def optimizer_solver(obj, ineqs=None, eqs=None, bounds=None):
+    eqs = eqs if eqs is not None else tuple()
+    ineqs = ineqs if ineqs is not None else tuple()
     decoder = merge_encoders(obj.encoder,
                              *(con.encoder for con in ineqs+eqs))
-    ineq_con = tuple(NonlinearConstraint(ineq.flat_in_only, -np.inf, 0)
-                 for ineq in ineqs) if ineqs is not None else tuple()
-    eq_con = tuple(NonlinearConstraint(eq.flat_in_only, 0, 0)
-                 for eq in ineqs) if eqs is not None else tuple()
+    obj_flattened = external_encoder(obj, decoder)
+    ineq_con = tuple(NonlinearConstraint(
+        external_encoder(ineq, decoder), -np.inf, 0)
+                 for ineq in ineqs) 
+    eq_con = tuple(NonlinearConstraint(
+        external_encoder(eq, decoder), 0, 0)
+                 for eq in eqs) 
     constraints = ineq_con + eq_con
-    def function(x_initial=None, random_generator=None):
-        x_initial = dict() if x_initial is None else x_initial
-        x0 = encode(x_initial, decoder.order,
+    bounds_tuples = encode(bounds, decoder.order, 
+                           missingarg=lambda :(None,None)) 
+    def function(x0=None, random_generator=None):
+        x0 = dict() if x0 is None else x0
+        x0_array = encode(x0, decoder.order,
                     missingarg=random_generator, flatten=True)
-        x_root = minimize(obj.flat_in_only, x0, 
-                          constraints=constraints, bounds=bounds)
-        return x_root
+        solution_obj = minimize(obj_flattened, x0_array, 
+                          constraints=constraints, 
+                          bounds=bounds_tuples)
+        return solution_obj.x
     return EncodedFunction(function, None, decoder)
