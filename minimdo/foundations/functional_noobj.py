@@ -98,7 +98,7 @@ def residual_solver(encoded_function, solve_vars_encoder,
 def external_encoder(f, decoder):
     def function(x):
         d = decode(x, decoder.order, decoder.shapes, unflatten=True)
-        return f.dict_in_only(d)
+        return f.dict_in_flat_out(d)
     return function
 
 def optimizer_solver(obj, ineqs=None, eqs=None, bounds=None):
@@ -116,12 +116,15 @@ def optimizer_solver(obj, ineqs=None, eqs=None, bounds=None):
     constraints = ineq_con + eq_con
     bounds_tuples = encode(bounds, decoder.order, 
                            missingarg=lambda :(None,None)) 
-    def function(x0=None, random_generator=None):
+    def function(x0=None, random_generator=None, 
+                 optimizer='SLSQP'):
         x0 = dict() if x0 is None else x0
         x0_array = encode(x0, decoder.order,
                     missingarg=random_generator, flatten=True)
         solution_obj = minimize(obj_flattened, x0_array, 
                           constraints=constraints, 
-                          bounds=bounds_tuples)
+                          bounds=bounds_tuples,
+                          method=optimizer)
+        print(solution_obj.message)
         return solution_obj.x
     return EncodedFunction(function, None, decoder)
