@@ -9,11 +9,13 @@ from gurobipy import GRB
 def direct_eqs(eqv, outset):
     return {idx: (outset[idx], tuple(elt for elt in val if elt != outset[idx])) for idx,val in eqv.items()}
 
-def reassigneq(left, right, var):
+def reassigneq(left, right, var=None, **kwargs):
     if left == var:
         return right
     diff = right if left == None else left-right
-    sol = sp.solve(diff, var)
+    if var == None:
+        return diff
+    sol = sp.solve(diff, var, **kwargs)
     if len(sol) == 2:
         return sol[1] # return the bigger number for now for quadratics
     else:
@@ -32,9 +34,6 @@ class Equation():
 
     def __repr__(self) -> str:
         return '{} = {}'.format(self.left, self.right)
-
-def idx_eqlist(eqlist):
-    return {idx: eq for idx, eq in enumerate(eqlist)}
 
 def reassign(eqs, outset):
     neweqs = {}

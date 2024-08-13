@@ -32,12 +32,12 @@ def eqv_to_edges_tree(Ein, output_set=None, n_eqs=None, offset=True):
     tree = default_tree(Ein.keys())
     return edges, tree, output_set
 
-def sort_scc(G, filterfx=None):
+def sort_scc(G, filterfx=None, outputname=False):
     filterfx = filterfx if filterfx else filter_solver_comps
     C = nx.condensation(G)
     order = []
     for n in nx.topological_sort(C):
-        filtereqs = {elt for elt in C.nodes[n]['members'] if filterfx(elt)}
+        filtereqs = {elt.name if outputname else elt for elt in C.nodes[n]['members'] if filterfx(elt)}
         if filtereqs:
             order.append(filtereqs)
     return order

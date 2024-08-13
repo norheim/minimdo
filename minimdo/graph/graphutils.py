@@ -118,7 +118,8 @@ def solver_children(tree, solver_idx, solverlist=False):
 def default_tree(idxs, solver_idx=1):
     return OrderedDict((key,1) for key in idxs),{},{}
 
-def flat_graph_formulation(Ein, Eout, Rin, nodetyperepr=None, raw=False):
+def flat_graph_formulation(Ein, Eout, Rin=None, nodetyperepr=None, raw=False):
+    Rin = Rin if Rin else {}
     transform_fx = None if raw else partial(transform_E, tfx=lambda x: Node(x, COMP, nodetyperepr), tvar=lambda x: Node(x, VAR, nodetyperepr)) 
     edges = all_edges(merge_edges(Ein,Rin), Eout, transform_fx)
     G = nx.DiGraph(edges)

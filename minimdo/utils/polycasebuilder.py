@@ -28,16 +28,16 @@ def residual_poly_executables(var_mapping, polynomials):
     return [Component.fromsympy(function, component=component, arg_mapping=arg_mapping) for component,function in polynomials.items()]
 
 
-def generate_random_polynomials(eqv, output_set, n_eqs, rng=None):
-    rng = rng if rng else np.random.default_rng(12345)
+def generate_random_polynomials(eqv, output_set, n_eqs, rng=None, seed=12345, xval=None):
+    rng = rng if rng else np.random.default_rng(seed)
     edges, tree, output_set = eqv_to_edges_tree(eqv, output_set, n_eqs, offset=True)
     Ein, Eout, _ = edges
     all_vars = all_variables(Ein,Eout)
     var_mapping = {idx: (Var(str(Node(idx,VAR)), varid=idx), str(Node(idx,VAR))) for idx in all_vars}
-    polynomials = {idx: random_bijective_polynomial(rng, (var_mapping[elt-n_eqs][0] for elt in vrs)) for idx,vrs in eqv.items()}
-    components = residual_poly_executables(var_mapping, polynomials)
-    directed_components = directed_poly_executables(var_mapping, polynomials, output_set)
-    return polynomials, var_mapping, edges, tree, components+directed_components
+    polynomials = {idx: random_bijective_polynomial(rng, (var_mapping[elt-n_eqs][0] for elt in vrs), xval=xval) for idx,vrs in eqv.items()}
+    #components = residual_poly_executables(var_mapping, polynomials)
+    #directed_components = directed_poly_executables(var_mapping, polynomials, output_set)
+    return polynomials, var_mapping, edges, tree
 
 def generate_julia_polynomials(reseqs, vrs, n_eqs):
     print('@var {}'.format(", ".join(['x_{}'.format(vr) for vr in vrs])))

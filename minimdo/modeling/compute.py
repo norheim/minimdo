@@ -7,10 +7,12 @@ from autograd import grad
 import autograd.numpy as anp
 import openmdao.api as om
 from pint import UnitRegistry
-from trash.inputresolver import reassigneq, idx_eqlist, eqvars, default_out, default_in
+from trash.inputresolver import reassigneq, eqvars, default_out, default_in
 from itertools import count
 from anytree import Node, NodeMixin, PreOrderIter
 from enum import Enum
+from modeling.arghandling import Encoding
+
 ureg = UnitRegistry()
 NodeTypes = Enum('NodeTypes', 'INTER END SOLVER OPT')
 INTER = NodeTypes.INTER
@@ -87,6 +89,11 @@ class Var(sp.core.Symbol):
 
 def create_vars(string, split=' '):
     return [Var(elt) for elt in string.split(split)]
+
+def var_encoding(*vars):
+    return Encoding(order=vars, shapes=
+                    tuple(var.shape if var.shape is not None 
+                          else (1,) for var in vars))
 
 class Par(Var):
     _ids = count(0)

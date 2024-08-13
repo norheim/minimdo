@@ -109,15 +109,16 @@ def plot_patches(ax, allpatches, patchwidth=2):
 def is_end_comp(Eout, fx, dispendcomp=True):
     return Eout[fx] == (None,) and dispendcomp
 
-def plot_incidence_matrix(A, column_labels, row_labels, pad=None, **kwargs):
+def plot_incidence_matrix(A, column_labels, row_labels, pad=None, colsalignleft=None, **kwargs):
     fontsize = kwargs.get('fontsize', 16)
     hideticks = kwargs.get('hideticks', False)
     rotation = kwargs.get('rotation', 60)
     fig, ax = plt.subplots(figsize=kwargs.get('figsize',None))
     ax.pcolormesh(A, cmap='Greys', edgecolors='lightgray', linewidth=1, vmin=0, vmax=1.2)
     xtickidx, xtags = zip(*enumerate(column_labels))
-    kwargs = {'ha': 'left'} if pad else dict()
-    plt.xticks(np.array(xtickidx)+0.5, xtags, rotation = rotation, fontsize=fontsize, **kwargs)
+    kwargs = {'ha': 'left'} if colsalignleft else dict()
+    xpad = 0 if colsalignleft else 0.5
+    plt.xticks(np.array(xtickidx)+xpad, xtags, rotation = rotation, fontsize=fontsize, **kwargs)
     ax.xaxis.tick_top()
     ytickidx, ytags = zip(*enumerate(row_labels))
     ytickargs = {'ha':'left'} if pad else dict()

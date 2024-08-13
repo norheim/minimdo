@@ -1,11 +1,12 @@
-from enum import Enum
 from graph.graphutils import dfs_tree, merge_edges, solver_children, end_components, Node, SOLVER, VAR, COMP, all_solvers, path
 from utils.utils import normalize_name
 from collections import defaultdict
+from enum import Enum
 
 NodeTypesExtended = Enum('NodeTypesExtended', 'ENDCOMP')
 NodeTypesExtended.__repr__ = lambda x: x.name
 ENDCOMP = NodeTypesExtended.ENDCOMP
+
 ExecutionTypes = Enum('ExecutionTypes', 'EXPL IMPL EQ NEQ OBJ SOLVE OPT')
 ExecutionTypes.__repr__ = lambda x: x.name
 EXPL, IMPL, EQ, NEQ, OBJ, SOLVE, OPT = ExecutionTypes.EXPL,ExecutionTypes.IMPL,ExecutionTypes.EQ,ExecutionTypes.NEQ,ExecutionTypes.OBJ,ExecutionTypes.SOLVE,ExecutionTypes.OPT

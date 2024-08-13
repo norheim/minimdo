@@ -16,3 +16,5 @@ figures
 *.tikz
 *.tex
 */openaerostruct_examples/
+*/docs/_build
+*.json
