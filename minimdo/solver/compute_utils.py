@@ -1,9 +1,9 @@
 from trash.inputresolver import getallvars
 from modeling.compute import Evaluable
 
-def get_outputs(eqs, model):
+def get_outputs(eqs, model, varasstring=False):
     vrs = getallvars(eqs)
-    return {elt: model.get_val(str(elt))[0] for elt in vrs}
+    return {(str(elt) if varasstring else elt): model.get_val(str(elt))[0] for elt in vrs}
 
 def prettynum(num):
     if 1e-3 <= num <= 1e3:

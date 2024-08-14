@@ -18,3 +18,11 @@ figures
 */openaerostruct_examples/
 */docs/_build
 *.json
+*.ply
+*.vtk
+*.stl
+*.bib
+*.txt
+*.yml
+*.egg
+*.jupyterlab-workspace

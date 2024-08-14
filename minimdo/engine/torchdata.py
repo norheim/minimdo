@@ -11,6 +11,10 @@ def generate_indices(keys):
     indices = {k: torch.tensor([idx], dtype=torch.long) for idx,k in enumerate(keys)}
     return indices
 
+def reverse_indices(idxvectors, indices):
+    revindex = {val.item():key for key,val in indices.items()}
+    return tuple(revindex[elt.item()] for elt in idxvectors)
+
 def symbols(symbolargs, dim='scalar'):
     all_symbols = sp.symbols(symbolargs)
     indices = generate_indices(all_symbols)
@@ -82,8 +86,8 @@ def load_multiple_files(prob_names, file_name=None):
             inequality_constraints_sympy, symb_str_mapping)
 
 
-def load_vals(file_name, indices, path_to_file=None, x0=None, default=0):
-    xvalsdict = load_file(file_name)
+def load_vals(file_name, indices, path_to_file=None, x0=None, default=0, isdict=False):
+    xvalsdict = load_file(file_name) if not isdict else file_name
     x0 = x0 if x0 is not None else torch.ones(len(indices), dtype=torch.float64)*default
     for key, val in indices.items():
         x0[val] = xvalsdict.get(str(key), x0[val])

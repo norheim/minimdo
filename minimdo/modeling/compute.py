@@ -481,8 +481,8 @@ def coupled_run(eqs, seq_order, solve_order, parent, root, outset=None,
                 subs = group.add_subsystem("eq{}".format(eqn), comp, 
                     promotes=['*'])
                 if addsolver:
-                        subs.linear_solver = om.DirectSolver()
-                        subs.nonlinear_solver = om.NewtonSolver(solve_subsystems=False)
+                    subs.linear_solver = om.DirectSolver()
+                    subs.nonlinear_solver = om.NewtonSolver(solve_subsystems=False)
     return counter
 
 def buildidpvars(inputs, model):

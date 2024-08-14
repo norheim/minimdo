@@ -37,7 +37,7 @@ def draw(g, pos=None, edge_color='k', width=2, arc=None, figsize=(6,6),
     
     labels = OrderedDict([(elt,generate_label(str(elt), latexlabel=latexlabels)) for elt in g.nodes])
     if pos is None:
-        pos = nx.drawing.nx_pydot.graphviz_layout(g, prog=prog, **kwargs)
+        pos = nx.nx_agraph.graphviz_layout(g, prog=prog, **kwargs)
     fig = plt.figure(figsize=figsize)
     plt.margins(0.15)
     if isinstance(node_shape, dict):
@@ -48,8 +48,8 @@ def draw(g, pos=None, edge_color='k', width=2, arc=None, figsize=(6,6),
         nx.draw_networkx_nodes(g, pos=pos, node_size=node_size, node_color=node_color, linewidths=linewidths, edgecolors='k', node_shape=node_actual_shape)
     #https://stackoverflow.com/questions/22785849/drawing-multiple-edges-between-two-nodes-with-networkx
     connectionstyle = 'arc3, rad = {}'.format(arc) if arc else 'arc3'
-    nx.draw_networkx_edges(g, pos=pos, arrowsize=20, width=width, 
-        edge_color=edge_color, node_size=node_size, connectionstyle=connectionstyle)
+    arrowheadargs = {'arrowsize':20} if g.is_directed() else {}
+    nx.draw_networkx_edges(g, pos=pos, width=width, edge_color=edge_color, node_size=node_size, connectionstyle=connectionstyle, **arrowheadargs)
     nx.draw_networkx_labels(g, pos, labels, **label_kwargs)
     plt.gca().axis("off")
     return fig, plt.gca()
@@ -67,12 +67,13 @@ def drawbipartite(g, left_nodes=None, M=None, figsize=(4,5), **kwargs):
     edge_color = ['royalblue' if n1 in M and M[n1]==n2 else 'k' 
         for n1, n2 in g.edges()] if M else None
     edge_width = [4 if n1 in M and M[n1]==n2 else 2 
-        for n1, n2 in g.edges()] if M else None
+        for n1, n2 in g.edges()] if M else kwargs.get('width', 2)
     draw(g, pos, edge_color, edge_width, figsize=figsize, **kwargs)
 
-def bipartite_repr(eqvars):
+def bipartite_repr(eqvars, direct=False):
     edges = [(inp, eq) for eq, inps in eqvars.items() for inp in inps]
-    return nx.Graph(edges), edges
+    B = nx.DiGraph(edges) if direct else nx.Graph(edges)
+    return B, edges
 
 def digraph_repr(eqvars, default_output, intermediary=False):
     edges = [(inp, (eq if intermediary else default_output[eq])) for eq, inps in eqvars.items() for inp in inps if inp != default_output[eq]]
