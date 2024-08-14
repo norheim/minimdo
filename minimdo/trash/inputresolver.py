@@ -50,7 +50,7 @@ def eqvars(eqs):
     in eqs.items()}
 
 def default_out(eqs):
-    return {key: left for key,(left,right) in eqs.items()}
+    return {key: left for key,(left,_) in eqs.items()}
 
 def getallvars(eqs, sympy=True):
     vrs = set()
@@ -130,7 +130,7 @@ def encode_condensation(C, inv_outset, formtype='mdf'):
 def mdf_order(eqvars, outset):
     # TODO: need to make sure we cannot have two equations with same output
     edges = [(inp, outset[eq]) for eq, inps in eqvars.items() 
-        for inp in inps if inp != outset[eq]]
+        for inp in inps if (inp != outset[eq] and outset[eq] is not None)]
     D = nx.DiGraph(edges)
     C = nx.condensation(D)
     inv_outset = {val: key for key,val in outset.items()}

@@ -306,9 +306,10 @@ def adda(branch_node, left, right, pretty_name=False, returnfx=False, returnnode
     else:
         return out
 
-def addf(branch_node, eq, name=None):
+def addf(branch_node, eq, name=None, nameasidx=False):
     m = branch_node.ref
-    fname = name if name else 'r_{{{}}}'.format(len(m.eqs))
+    fname = name if name else (str(len(m.eqs)) if nameasidx 
+                               else 'r_{{{}}}'.format(len(m.eqs)))
     function = Function(fname, original_node_type=END)
     tree_node = RefNode(fname, ref=function, node_type=END, parent=branch_node)
     m.eqs[function] = ((None, eq))
