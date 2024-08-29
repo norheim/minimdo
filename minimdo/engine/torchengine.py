@@ -4,6 +4,7 @@ import sympy as sp
 from scipy.optimize import fsolve
 import numpy as np
 import torch
+import time
 
 class AnalysisFunction():
     def __init__(self, triplet, indices):
@@ -222,8 +223,10 @@ class ParallelResiduals():
             constraint_indices = torch.tensor([elt for elt in output_indices if elt in self.sharedvars])
             y[output_indices] = a(x)[output_indices]
             r.append(y[constraint_indices]-x[constraint_indices]) # or x[output_indices]/y[output_indices]-1
-        if self.functions:
+        if self.functions and self.analyses:
             return [f(y) for f in self.functions]+[torch.cat(r)]
+        elif self.functions:
+            return [f(y) for f in self.functions]+[torch.tensor([])]
         else:
             return torch.cat(r)
 
@@ -254,6 +257,46 @@ def generate_eval_and_gradient(function, solvefor, x):
 import cyipopt
 from collections import namedtuple
 OptProblem = namedtuple('OptProblem', ['objective', 'constraints', 'gradient', 'jacobian', 'intermediate'])
+
+def ipoptsolvercon(xguess, obj_function, ineq_function, eq_function, dobj, dineq, deq, bnds_problem):
+    ineqlen, eqlen = len(ineq_function(xguess)), len(eq_function(xguess))
+
+    def all_constraints(x):
+        return np.concatenate([ineq_function(x), eq_function(x)])
+
+    def all_constraints_jac(x):
+        if eqlen == 0:
+            if ineqlen != 0:
+                return dineq(x)
+            else:
+                return np.tensor([])
+        elif ineqlen == 0:
+            return deq(x)
+        return np.concatenate([dineq(x), deq(x)], axis=0)
+
+    OptProblem = namedtuple('OptProblem', ['objective', 'constraints', 'gradient', 'jacobian', 'intermediate'])
+
+    lb,ub = zip(*bnds_problem)
+    cl = np.concatenate([-np.inf*np.ones(ineqlen), np.zeros(eqlen)])
+    cu = np.concatenate([np.zeros(ineqlen), np.zeros(eqlen)])
+
+    storeiter = [0]
+
+    def logiter(alg_mod, iter_count, obj_value, inf_pr, inf_du, mu, d_norm, regularization_size, alpha_du, alpha_pr, ls_trials):
+        storeiter[0] = iter_count
+
+    # define the problem
+    probinfo = OptProblem(obj_function, all_constraints, dobj, all_constraints_jac, logiter)
+
+    prob = cyipopt.Problem(n=len(xguess), m=len(cu), lb=lb, ub=ub, cl=cl, cu=cu, 
+                        problem_obj=probinfo)
+    prob.add_option('max_iter', 8000)
+    #prob.add_option('acceptable_tol', 1e-6)
+    start_time = time.time()
+    sol, info = prob.solve(xguess)
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    return sol,info,storeiter,elapsed_time
 
 def ipoptsolver(eval_function, xguess, fprime, bnds_problem=None, debug=False):
     # define the problem

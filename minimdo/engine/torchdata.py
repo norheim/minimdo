@@ -93,6 +93,19 @@ def load_vals(file_name, indices, path_to_file=None, x0=None, default=0, isdict=
         x0[val] = xvalsdict.get(str(key), x0[val])
     return x0
 
+def perturb(x0, delta, indices, seed=42):
+    n = len(x0)
+    rng = np.random.default_rng(seed=seed)
+    points = rng.normal(size=(n,))
+    points *= delta
+    points += 1
+    xnew = x0.clone()
+    xnew.requires_grad_(False)
+    for idx in indices:
+        xnew[idx] = x0[idx]* points[idx]
+    xnew.requires_grad_(True);
+    return xnew
+
 def generate_optim_functions(optim_funcs, solvefor_indices, x, 
                              inequality_direction='negative-null',
                              objective=None, 

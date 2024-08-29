@@ -20,9 +20,6 @@ END = NodeTypes.END
 SOLVER = NodeTypes.SOLVER # to be used for inter but when a solver
 OPT = NodeTypes.OPT
 
-def args_in_order(name_dict, names):
-    return [name_dict[in_var] for in_var in names if in_var in name_dict]
-
 # The function will work for sympy symbols or just plain strings
 def get_latex(symbol_or_string):
     return symbol_or_string if symbol_or_string else r'\mathrm{{{}}}'.format(symbol_or_string)
@@ -151,110 +148,6 @@ class SolverNode(NodeMixin):
     def __str__(self):
         return str(self.name)
 
-# The following class emulates being a dictionary for sympys lambdify to work
-# with autograd
-math_functions = ['cos', 'sin', 'tan', 'arccos', 'arcsin', 'arctan', 'sqrt', 
-'exp', 'log', 'log2', 'log10']
-
-anp_math = {elt: getattr(anp, elt) for elt in math_functions}
-
-# The following class is a very hacky class that is used further down to recover the unit associated with a specific function. It overrides all standard operators in python
-class MockFloat(float):
-    def __new__(self, value):
-        return float.__new__(self, value)
-    def __init__(self, value):
-        float.__init__(value)
-    def __add__(self, other):
-        return self
-    def __sub__(self, other):
-        return self
-    def __mul__(self, other):
-        return self
-    def __truediv__(self, other):
-        return self
-    def __floordiv__(self, other):
-        return self
-    def __mod__(self, other):
-        return self
-    def __pow__(self, other):
-        return self
-    def __rshift__(self, other):
-        return self
-    def __lshift__(self, other):
-        return self
-    def __and__(self, other):
-        return self
-    def __or__(self, other):
-        return self
-    def __xor__(self, other):
-        return self
-
-def get_unit(expr):
-    if isinstance(expr, Var):
-        return expr.varunit
-    else:
-        free_symbols = list(expr.free_symbols)
-        if free_symbols:
-            fx = sp.lambdify(free_symbols, expr, np)
-            args = (ureg.Quantity(MockFloat(1), free_symbol.varunit) for free_symbol in free_symbols)
-            dim = fx(*args)
-            # need this case rhs_unit is a float, which can happen when we have powers, e.g. 10^x
-            if not isinstance(dim, ureg.Quantity):
-                dim = ureg('')
-            return dim
-        else:
-            return ureg('') #most likely we encountered a number
-
-def get_unit_multiplier(unit):
-    return unit.to_base_units().magnitude
-
-def unit_conversion_factors(right, orig_unit, symb_order):
-    unit = orig_unit if orig_unit else ureg('')
-    rhs_unit = get_unit(right)
-    convert = np.array([get_unit_multiplier(free_symbol.varunit) for 
-            free_symbol in symb_order])
-    if orig_unit:
-        assert(unit.dimensionality == rhs_unit.dimensionality)
-        conversion_unit = unit
-    else: # unitstr was not given
-        if not hasattr(rhs_unit, 'units'):
-            conversion_unit = ureg('')
-        else:
-            conversion_unit = ureg.Quantity(1, 
-                rhs_unit.to_base_units().units)
-
-    factor = get_unit_multiplier(conversion_unit)
-    return convert, factor
-
-def evaluable_with_unit(right, symb_order, tovar=None):
-    convert, factor = unit_conversion_factors(right, tovar, symb_order)
-    def correction(fx):
-        def rhsfx_corrected(*args):
-            return fx(*(convert*np.array(args).flatten()))/factor
-        return rhsfx_corrected
-
-    return correction
-
-def fill_args(args, input_names, attrcheck='varval'):
-    fxargs = []
-    idx = 0
-    for elt in input_names:
-        if getattr(elt, attrcheck):
-            fxargs.append(elt.varval)
-        else:
-            fxargs.append(args[idx])
-            idx+=1
-    return fxargs
-
-def partialfx(fx, input_names):
-    def wrapper(*args, **kwargs):
-        partial = kwargs.get('partial', None)
-        if partial:
-            return fx(*fill_args(args, input_names, partial))
-        else:
-            return fx(*args)
-    return wrapper
-
 def eqvar(name, right, unit=None, forceunit=False):
     newvar = Var(name, unit=unit)
     newvar.forceunit=forceunit # TODO: HACK for sympy function
@@ -334,37 +227,6 @@ def addsolver(branch_node, sequence=None, outset=None, name=None, node_type=SOLV
         m.outset[fnode_end.ref] = solvevar
         fnode_end.parent = solver_node
     return solver_node
-
-# Should be sympy agnostic
-class Evaluable():
-    def __init__(self, fx, input_names=None):
-        input_names = input_names if input_names else fx.__code__.co_varnames
-        self.input_vars = input_names
-        self.input_names = list(map(str,input_names))
-        self.fx = partialfx(fx, input_names)
-        wrapped_fx = fx if len(input_names) == 1 else (
-                lambda x: fx(*x)) #adapt to numpy
-        self.jfx = grad(wrapped_fx)
-        self.njfx = lambda *args: self.jfx(np.array(args).astype(float))
-
-    @classmethod
-    def fromsympy(cls, expr, tovar=None):
-        input_names = list(expr.free_symbols)
-        fx = sp.lambdify(input_names, expr, anp_math)
-        if tovar and not isinstance(type(expr), sp.core.function.UndefinedFunction):# and hasattr(expr, 'dimensionality'): 
-            # this second conditions can be dangerous but need it to fix something
-            unitify = evaluable_with_unit(expr, input_names, tovar.varunit) 
-            # this is to get the right multiplier, any untis checks will have been done during creation? 
-            # TODO: check this
-            fx = unitify(fx)
-        return cls(fx, input_names)
-    
-    def evaldict(self, indict):
-        return self.fx(*args_in_order(indict, self.input_names))
-    
-    def graddict(self, indict):
-        args = np.array(args_in_order(indict, self.input_names))
-        return self.jfx(args)
 
 
 # TODO: OLD STUFF, should delete but kept for maintainability reasons
