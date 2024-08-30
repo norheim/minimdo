@@ -1,5 +1,5 @@
 from modeling.compute import Var, Par
-from modeling.api import Model, adda, addsolver
+from modeling.gen3.nesting import Model, adda, addsolver
 from constants_balloon import ρinterp, Pinterp, Ginterp, Tinterp
 import numpy as np
 

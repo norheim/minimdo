@@ -1,4 +1,4 @@
-from modeling.compute import END, INTER
+from modeling.gen2.nesting import END, INTER
 
 # Incidence structure
 def all_vars_from_incidence(incstr, include_par=False):

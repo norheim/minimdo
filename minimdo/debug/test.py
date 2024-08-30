@@ -1,8 +1,8 @@
 from graph.graphutils import draw_graph_graphical_props, flat_graph_formulation, Node, VAR, COMP, SOLVER, nested_sources, merge_edges
 from graph.nestedgraph import build_typedgraph, root_sources
 from modeling.compute import Var
-from modeling.api import Model, adda, addf, addsolver, setsolvefor, addobj, addineq
-from modeling.execution import edges_from_components, generate_components_and_residuals
+from modeling.gen3.nesting import Model, adda, addf, addsolver, setsolvefor, addobj, addineq
+from modeling.gen2.execution import edges_from_components, generate_components_and_residuals
 from graph.operators import sort_scc, reorder_merge_solve
 from graph.nestedgraph import build_typedgraph
 from graph.workflow import get_f, OPT, EQ, NEQ, OBJ

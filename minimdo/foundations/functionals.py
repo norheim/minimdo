@@ -1,9 +1,10 @@
-from modeling.arghandling import EncodedFunction, EncodedFunctionContainer
-from modeling.arghandling import Encoding
-from modeling.arghandling import decode, encode, merge_encoders
-from modeling.arghandling import flatten_args
-from modeling.execution import sympy_fx_inputs
-from modeling.transformations import partial_inversion
+from modeling.gen4.compute import EncodedFunctionContainer
+from modeling.gen4.arghandling import Encoding
+from modeling.gen4.arghandling import decode, encode, merge_encoders
+from modeling.gen4.arghandling import flatten_args
+from modeling.gen2.execution import sympy_fx_inputs
+from modeling.gen4.compute import EncodedFunction
+from modeling.gen2.transformations import partial_inversion
 from modeling.compute import Var
 from scipy.optimize import fsolve
 from scipy.optimize import minimize

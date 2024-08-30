@@ -178,22 +178,3 @@ def edges_from_components(comps, include_par=True):
             comp.arg_mapping.get(elt,None)))) #Lazy boolean evaluation
         Eout[comp.id] = comp.outputs
     return Ein, Eout, dict()
-
-def newfx(c, *x):
-    fxval = c.function(*x[:sum(c.indims)])
-    outval = x[sum(c.indims):]
-    out = [outval[idx]-elt for idx,elt in enumerate(fxval)]
-    # IMPORTANT: flatten the output!
-    return [elt for vector in out for elt in vector]
-
-# TODO: this now lives in transformations
-
-def residual_component(c, idx=0):
-    newinputs = c.inputs + c.outputs
-    newindims = c.indims + c.outdims
-    fx = lambda *x: newfx(c, *x)
-    return Component(fx, newinputs, (None,), idx, newindims, c.outdims)
-
-def generate_components_and_residuals(components, edges):
-    rcomps = [residual_component(c, c.id) for c in components if c.id in edges[2].keys()]
-    return components+rcomps

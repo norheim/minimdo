@@ -1,4 +1,4 @@
-from units import evaluable_with_unit
+from modeling.gen1.units import evaluable_with_unit
 from autograd import grad
 import autograd.numpy as anp
 import numpy as np

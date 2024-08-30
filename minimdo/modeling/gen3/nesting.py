@@ -1,6 +1,8 @@
+#formerly api.py
+
 from collections import OrderedDict
 from itertools import chain
-from modeling.execution import sympy_fx_inputs, Component, edges_from_components, component_hash
+from modeling.gen2.execution import sympy_fx_inputs, Component, edges_from_components, component_hash
 from modeling.unitutils import get_unit, ureg
 from modeling.compute import Var
 from graph.workflow import NEQ, EQ, OBJ, OPT, SOLVE
@@ -125,7 +127,7 @@ def generate_new_component_id(components):
 def addequation(components, right, *args, **kwargs):
     # creates a new component if it does not exists, and returns 
     # the existing component otherwise
-    left, args = args[0], args[1:] if args else None # allows for left to be optional
+    left, args = (args[0], args[1:]) if args else (None, []) # allows for left to be optional
     eqcomp = check_for_component(components, right, (left,))
     comp_isnew = False
     leftvar = None

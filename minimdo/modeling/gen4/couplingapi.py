@@ -1,15 +1,13 @@
 from collections import OrderedDict, defaultdict
-from modeling.api import addequation, calculateval
-from modeling.execution import edges_from_components, residual_component
-from solver.runpipeline import nestedform_to_mdao
-from graph.workflow import OPT, NEQ, EQ, OBJ, SOLVE
-from graph.graphutils import VAR, COMP, SOLVER
-from modeling.compute import Var
-from modeling.ipoptsolver import compute_residuals_generic, compute_structure, ProblemIPOPT
-from modeling.transformations import flatten_component
-from jax import jacobian
 from itertools import chain
 import numpy as np
+from modeling.gen2.execution import edges_from_components
+from modeling.gen2.transformations import flatten_component
+from modeling.gen3.nesting import addequation, calculateval
+from modeling.gen4.ipoptsolver import setup_ipopt
+from graph.workflow import OPT, NEQ, EQ, OBJ, SOLVE
+from graph.graphutils import VAR, COMP, SOLVER
+from solver.runpipeline import nestedform_to_mdao
 
 def find_indices(list1, list2):
     index_dict = {value: index for index, value in enumerate(list1)}
@@ -123,6 +121,9 @@ class Subproblem():
         left = self.add_equation(left, right, *args, **kwargs)
         return left
 
+    def setup_ipopt(self, y):
+        self.ipopt = setup_ipopt(self.components, 
+                                 self.independent, y)
    
     def solve_with_ipopt(self, y):
         self.setup_ipopt(y)
@@ -170,7 +171,7 @@ class Subproblem():
         input_dict = {var:var.varval for var in self.projected}
         full_output_dict = {var:var.varval for var in self.independent}
         local_dict = {**input_dict, **full_output_dict}
-        if vardict != None:
+        if vardict is not None:
             local_dict.update(vardict)
             if save_projected:
                 for key,val in local_dict.items():

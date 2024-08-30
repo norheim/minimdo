@@ -1,5 +1,5 @@
 from modeling.compute import Var, Par
-from modeling.api import Model, adda, addsolver
+from modeling.gen3.nesting import Model, adda, addsolver
 from numpy import pi
 from sympy import log, sqrt, cos
 

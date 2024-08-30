@@ -3,9 +3,9 @@ from foundations.functional_noobj import concatenate_residuals
 from foundations.functional_noobj import feed_forward
 from foundations.functional_noobj import residual_solver
 from foundations.functional_noobj import eliminate_vars
-from modeling.arghandling import Encoding, decode, encode  
-from modeling.arghandling import EncodedFunction  
-from modeling.transformations import partial_inversion
+from modeling.gen4.arghandling import Encoding, decode, encode  
+from modeling.gen4.compute import EncodedFunction  
+from modeling.gen2.transformations import partial_inversion
 from modeling.compute import Var
 from itertools import chain
 import sympy as sp

@@ -1,9 +1,11 @@
-from modeling.arghandling import encoder_diff, decode, encode
-from modeling.arghandling import flatten_args, merge_encoders
-from modeling.arghandling import EncodedFunction, Encoding
+from modeling.gen4.arghandling import encoder_diff, decode, encode
+from modeling.gen4.arghandling import flatten_args, merge_encoders
+from modeling.gen4.arghandling import Encoding
 from scipy.optimize import fsolve
 from scipy.optimize import minimize, NonlinearConstraint
 import numpy as np
+
+from modeling.gen4.compute import EncodedFunction
 
 def sequenced_encode_decode(encoded_function_order):
     encoder = Encoding()

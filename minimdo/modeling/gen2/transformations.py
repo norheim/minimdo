@@ -1,5 +1,5 @@
 from graph.graphutils import all_component_nodes, edges_to_Ein_Eout, flat_graph_formulation
-from modeling.execution import Component
+from modeling.gen2.execution import Component
 import sympy as sp
 import networkx as nx
 import numpy as np
@@ -35,6 +35,24 @@ def flatten_output(scalar_or_array):
             if isinstance(scalar_or_array, (np.ndarray, list)) 
             else np.array([scalar_or_array]))
     
+# TODO: this now lives in transformations
+def newfx(c, *x):
+    fxval = c.function(*x[:sum(c.indims)])
+    outval = x[sum(c.indims):]
+    out = [outval[idx]-elt for idx,elt in enumerate(fxval)]
+    # IMPORTANT: flatten the output!
+    return [elt for vector in out for elt in vector]
+
+def residual_component(c, idx=0):
+    newinputs = c.inputs + c.outputs
+    newindims = c.indims + c.outdims
+    fx = lambda *x: newfx(c, *x)
+    return Component(fx, newinputs, (None,), idx, newindims, c.outdims)
+
+def generate_components_and_residuals(components, edges):
+    rcomps = [residual_component(c, c.id) for c in components if c.id in edges[2].keys()]
+    return components+rcomps
+
 def flatten_component(comp, newid=None):
     new_inputs = comp.inputs + comp.outputs
     get_inputs = lambda args: args[:len(comp.inputs)]
