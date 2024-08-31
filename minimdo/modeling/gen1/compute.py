@@ -1,4 +1,4 @@
-from modeling.gen1.units import evaluable_with_unit
+from modeling.gen1.units import Var, evaluable_with_unit, get_unit, ureg
 from autograd import grad
 import autograd.numpy as anp
 import numpy as np
@@ -33,6 +33,17 @@ math_functions = ['cos', 'sin', 'tan', 'arccos', 'arcsin', 'arctan', 'sqrt',
 'exp', 'log', 'log2', 'log10']
 
 anp_math = {elt: getattr(anp, elt) for elt in math_functions}
+
+def eqvar(name, right, unit=None, forceunit=False):
+    newvar = Var(name, unit=unit)
+    newvar.forceunit=forceunit # TODO: HACK for sympy function
+    if not forceunit:
+        rhs_unit = get_unit(right)
+        if unit != None:
+            assert ureg(unit).dimensionality == rhs_unit.dimensionality
+    if unit == None:
+        newvar.varunit = ureg.Quantity(1, rhs_unit.to_base_units().units)
+    return newvar, (newvar, right)
 
 # Should be sympy agnostic
 class Evaluable():

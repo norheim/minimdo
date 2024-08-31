@@ -1,8 +1,8 @@
-import sympy as sp
 import numpy as np
-from modeling.compute import Var, ureg
 import jax.numpy as anp
 from math import isclose
+from pint import UnitRegistry
+ureg = UnitRegistry()
 #import autograd.numpy as anp
 
 # The following class is a very hacky class that is used further down to recover the unit associated with a specific function. It overrides all standard operators in python

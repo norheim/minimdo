@@ -1,5 +1,5 @@
 from trash.inputresolver import reassigneq
-from modeling.execution import Component
+from modeling.gen2.execution import Component
 import sympy as sp
 from collections import OrderedDict
 from graph.graphutils import all_variables, Node, VAR

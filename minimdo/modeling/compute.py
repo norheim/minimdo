@@ -1,10 +1,8 @@
-from pint import UnitRegistry
 from itertools import count
+from modeling.unitutils import get_unit, ureg
 import sympy as sp
 import numpy as np
 import re
-
-ureg = UnitRegistry()
 
 # The function will work for sympy symbols or just plain strings
 def get_latex(symbol_or_string):
@@ -81,3 +79,4 @@ class Par(Var):
         out = Var.__new__(self, *args, **kwargs)
         out.always_input = True
         return out
+    

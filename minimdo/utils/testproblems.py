@@ -26,10 +26,17 @@ def generate_random_prob(n_eqs, n_vars, seed=8, sparsity=1.0, independent_of_n=F
     
     for varnode in isolated_nodes:
         G.add_edge(varnode, rng.choice(eqids))
-    eqv = {elt: tuple(G[elt]) for elt in eqids}
-    varinc = {elt: tuple(G[elt]) for elt in bip_varids}
+    #M extended
+    outputs = set(M.values())
+    remaining = set(bip_varids) - outputs
+    Mext = {key+len(M): val for key,val in enumerate(remaining)}
+    Mfull = {**M, **Mext}
+    revMfull = {val: key for key,val in Mfull.items()}
+
+    eqv = {elt: tuple(map(lambda key: revMfull[key], G[elt])) for elt in eqids}
+    varinc = {elt: tuple(map(lambda key: revMfull[key], G[elt])) for elt in bip_varids}
     #allowed = copy.deepcopy(eqv)
-    return eqv, varinc, M
+    return eqv, varinc, {key: key+n_eqs for key in M.keys()}
 
 def random_problem_with_artifacts(m,n,seed,sparsity, **kwargs):
     seed = int(seed) # required for the way we generate random problems

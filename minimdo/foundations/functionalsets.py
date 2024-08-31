@@ -1,6 +1,6 @@
 import numpy as np
 from collections.abc import Callable
-from modeling.transformations import flatten_component
+from modeling.gen2.transformations import flatten_component
 from scipy.optimize import fsolve
 
 class ProjactableSet():

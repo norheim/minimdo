@@ -1,7 +1,5 @@
-from anytree import Node, NodeMixin, PreOrderIter
 from enum import Enum
-from modeling.unitutils import ureg, get_unit
-from modeling.compute import Var
+from anytree import NodeMixin, PreOrderIter
 from trash.inputresolver import eqvars, default_out, default_in
 
 NodeTypes = Enum('NodeTypes', 'INTER END SOLVER OPT')
@@ -53,17 +51,6 @@ class SolverNode(NodeMixin):
 
     def __str__(self):
         return str(self.name)
-
-def eqvar(name, right, unit=None, forceunit=False):
-    newvar = Var(name, unit=unit)
-    newvar.forceunit=forceunit # TODO: HACK for sympy function
-    if not forceunit:
-        rhs_unit = get_unit(right)
-        if unit != None:
-            assert ureg(unit).dimensionality == rhs_unit.dimensionality
-    if unit == None:
-        newvar.varunit = ureg.Quantity(1, rhs_unit.to_base_units().units)
-    return newvar, (newvar, right)
 
 class Model():
     def __init__(self):

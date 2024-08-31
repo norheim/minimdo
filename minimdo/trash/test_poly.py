@@ -4,7 +4,7 @@ from graph.graphutils import VAR, COMP, SOLVER, edges_to_Ein_Eout, sinks, source
 from graph.workflow import OBJ, NEQ, EQ, OPT
 from solver.runpipeline import nestedform_to_mdao
 import numpy as np
-from modeling.execution import Component
+from modeling.gen2.execution import Component
 from graph.operators import sort_scc, reorder_merge_solve
 from graph.graphview import bipartite_repr
 from trash.inputresolver import getallvars, direct_eqs, invert_edges
