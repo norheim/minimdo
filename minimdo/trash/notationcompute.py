@@ -1,6 +1,6 @@
 import openmdao.api as om
 from problemgen.gen1.openmdao import Expcomp, Evaluable
-from utils.utils import normalize_name
+from modeling.compute import normalize_name
 
 class Impcomp(om.ImplicitComponent):
     def initialize(self):

@@ -1,10 +1,4 @@
 from modeling.gen1.compute import Evaluable
-from trash.inputresolver import getallvars
-
-# This is a utility function to get the outputs after running an openmdao model
-def get_outputs(eqs, model, varasstring=False):
-    vrs = getallvars(eqs)
-    return {(str(elt) if varasstring else elt): model.get_val(str(elt))[0] for elt in vrs}
 
 def prettynum(num):
     if 1e-3 <= num <= 1e3:

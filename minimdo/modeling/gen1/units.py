@@ -41,7 +41,7 @@ def get_unit(expr):
             fx = sp.lambdify(free_symbols, expr, np)
             args = (ureg.Quantity(MockFloat(1), free_symbol.varunit) for free_symbol in free_symbols)
             dim = fx(*args)
-            # need this case rhs_unit is a float, which can happen when we have powers, e.g. 10^x
+            # need this in case rhs_unit is a float, which can happen when we have powers, e.g. 10^x
             if not isinstance(dim, ureg.Quantity):
                 dim = ureg('')
             return dim
@@ -54,8 +54,7 @@ def get_unit_multiplier(unit):
 def unit_conversion_factors(right, orig_unit, symb_order):
     unit = orig_unit if orig_unit else ureg('')
     rhs_unit = get_unit(right)
-    convert = np.array([get_unit_multiplier(free_symbol.varunit) for 
-            free_symbol in symb_order])
+    convert = np.array([get_unit_multiplier(free_symbol.varunit) for free_symbol in symb_order])
     if orig_unit:
         assert(unit.dimensionality == rhs_unit.dimensionality)
         conversion_unit = unit

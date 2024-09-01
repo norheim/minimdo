@@ -5,7 +5,7 @@ from itertools import chain, product
 from typing_extensions import OrderedDict
 import networkx as nx
 from graph.graphview import draw
-from utils.utils import normalize_name
+from modeling.compute import normalize_name
 
 NodeTypes = Enum('NodeTypes', 'VAR COMP SOLVER')
 NodeTypes.__repr__ = lambda x: x.name

@@ -1,6 +1,6 @@
 from graph.workflow import OPT, SOLVE, NEQ, EQ, OBJ, EXPL, IMPL
 from graph.graphutils import SOLVER, VAR, COMP
-from utils.utils import normalize_name
+from modeling.compute import normalize_name
 from modeling.gen2.execution import Component
 
 def implicit_comp_name(comps):

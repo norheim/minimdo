@@ -3,7 +3,7 @@ import sympy as sp
 from sympy import S
 import networkx as nx
 from modeling.compute import args_in_order, Equation, coupled_run
-from solver.compute_utils import get_outputs
+from problemgen.gen1.resultscheck import get_outputs
 from trash.inputresolver import reassign, getdofs, set_ins, mdf_order
 import numpy as np
 import openmdao.api as om

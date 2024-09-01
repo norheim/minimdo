@@ -6,7 +6,6 @@ from graph.graphutils import all_variables, Node, VAR
 from graph.operators import eqv_to_edges_tree
 from modeling.compute import Var
 from utils.randompoly import random_bijective_polynomial
-from utils.testproblems import generate_random_prob
 import numpy as np
 
 def get_arg_mapping(var_mapping, symbol_map=False):

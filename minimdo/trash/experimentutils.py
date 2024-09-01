@@ -2,7 +2,7 @@ import pandas as pd
 from ipywidgets import IntProgress
 from IPython.display import display
 from itertools import islice, product
-from utils.testproblems import random_problem_with_artifacts
+from utils.randomstructure import random_problem_with_artifacts
 
 def generate_problem(*args, df=None):
     data = []

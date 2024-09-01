@@ -1,5 +1,4 @@
 import sympy as sp
-from utils.utils import invmap
 import networkx as nx
 from sympy import S
 import gurobipy as gp

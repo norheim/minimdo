@@ -1,5 +1,5 @@
 from utils.polycasebuilder import generate_random_polynomials, get_arg_mapping, directed_poly_executables, eqv_to_edges_tree
-from utils.testproblems import generate_random_prob
+from utils.randomstructure import generate_random_prob
 from graph.graphutils import VAR, COMP, SOLVER, edges_to_Ein_Eout, sinks, sources, namefromid, all_components
 from graph.workflow import OBJ, NEQ, EQ, OPT
 from solver.runpipeline import nestedform_to_mdao

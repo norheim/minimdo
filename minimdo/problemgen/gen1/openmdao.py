@@ -1,6 +1,7 @@
 import openmdao.api as om
 import numpy as np
 from modeling.gen1.compute import Evaluable
+from trash.inputresolver import getallvars
 
 class Expcomp(om.ExplicitComponent):
     def initialize(self):
@@ -127,3 +128,8 @@ def buildidpvars(inputs, model):
             and elt.varval != None) else np.random.rand()
         comp.add_output(str(elt), val)
     model.add_subsystem('inp', comp, promotes=['*'])
+
+# This is a utility function to get the outputs after running an openmdao model
+def get_outputs(eqs, model, varasstring=False):
+    vrs = getallvars(eqs)
+    return {(str(elt) if varasstring else elt): model.get_val(str(elt))[0] for elt in vrs}
