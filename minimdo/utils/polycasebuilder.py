@@ -12,13 +12,13 @@ def get_arg_mapping(var_mapping, symbol_map=False):
     return {key:symbol if symbol_map else name for key, (symbol, name) in var_mapping.items()}
 
 def directed_poly_executables(var_mapping, polynomials, output_set):
-    arg_mapping = get_arg_mapping(var_mapping)
+    arg_mapping = get_arg_mapping(var_mapping, symbol_map=True)
     new_components = []
     for idx, eq in polynomials.items():
         left = output_set[idx]
         leftvar,_ = var_mapping[left]
         function = sp.simplify(reassigneq(None, eq, leftvar))
-        new_comp = Component.fromsympy(function, leftvar, component=idx, arg_mapping=arg_mapping)
+        new_comp = Component.fromsympy(function, leftvar, component=idx)
         new_components.append(new_comp)
     return new_components
 
@@ -36,7 +36,7 @@ def generate_random_polynomials(eqv, output_set, n_eqs, rng=None, seed=12345, xv
     polynomials = {idx: random_bijective_polynomial(rng, (var_mapping[elt-n_eqs][0] for elt in vrs), xval=xval) for idx,vrs in eqv.items()}
     #components = residual_poly_executables(var_mapping, polynomials)
     #directed_components = directed_poly_executables(var_mapping, polynomials, output_set)
-    return polynomials, var_mapping, edges, tree
+    return polynomials, var_mapping, edges, tree, output_set
 
 def generate_julia_polynomials(reseqs, vrs, n_eqs):
     print('@var {}'.format(", ".join(['x_{}'.format(vr) for vr in vrs])))

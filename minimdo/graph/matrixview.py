@@ -1,6 +1,6 @@
 from collections import defaultdict
 from graph.graphutils import (edges_to_Ein_Eout, all_variables, 
-                              all_components, dfs_tree, end_components, 
+                              dfs_tree, end_components, 
                               root_solver, solver_children, 
                               VAR, COMP, SOLVER, namefromid)
 from graph.graphutils import path

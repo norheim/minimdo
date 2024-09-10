@@ -148,7 +148,7 @@ def adda(solver, left, right, *args, **kwargs):
     if comp_isnew:
         addvars(model, eqcomp.mapped_inputs, leftvar)
         model.components.append(eqcomp)
-        model.comp_by_var[left] = eqcomp.id
+        model.comp_by_var[leftvar] = eqcomp.id
     else:
         leftvar = model.idmapping[eqcomp.outputs[0]]
     model.Ftree[eqcomp.id] = solver.idx

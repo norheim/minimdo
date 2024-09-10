@@ -86,11 +86,14 @@ def load_multiple_files(prob_names, file_name=None):
             inequality_constraints_sympy, symb_str_mapping)
 
 
-def load_vals(file_name, indices, path_to_file=None, x0=None, default=0, isdict=False):
+def load_vals(file_name, indices, path_to_file=None, x0=None, default=0, isdict=False, dtype=torch.float64):
     xvalsdict = load_file(file_name) if not isdict else file_name
-    x0 = x0 if x0 is not None else torch.ones(len(indices), dtype=torch.float64)*default
+    x0 = x0 if x0 is not None else torch.ones(sum(len(idx) for idx in indices.values()), dtype=dtype)*default
     for key, val in indices.items():
-        x0[val] = xvalsdict.get(str(key), x0[val])
+        xval = xvalsdict.get(str(key), x0[val])
+        if len(val) > 1:
+            xval = xval.to(dtype)
+        x0[val] = xval
     return x0
 
 def perturb(x0, delta, indices, seed=42):
@@ -105,6 +108,27 @@ def perturb(x0, delta, indices, seed=42):
         xnew[idx] = x0[idx]* points[idx]
     xnew.requires_grad_(True);
     return xnew
+
+# precursor to optim_func
+def transfer_value(xfrom, xto, copy_indices_tuple):
+    for indices_in,indices_out  in copy_indices_tuple:
+        xto[indices_out] = xfrom[indices_in]
+    return xto
+
+class ExpandVector():
+    def __init__(self, indicesin, indicesout):
+        self.indicesout_len =  len(indicesout.values())
+        copy_over_indices = indicesin.keys()
+        self.copy_indices_tuple = [(indicesin[key], indicesout[key]) for key in copy_over_indices]
+        structure = torch.cat([indicesin[key] for key in copy_over_indices])
+        self.structure = (structure, structure)
+        structure_by_name = {key: key for key in indicesout.keys() if key in copy_over_indices}
+        self.structure_full = {elt.item():indicesout[val] for key,val in structure_by_name.items() for elt in indicesout[key]}
+
+    def __call__(self, x):
+        xzero = torch.empty(self.indicesout_len, dtype=x.dtype)
+        output = transfer_value(x, xzero, self.copy_indices_tuple)
+        return output
 
 def generate_optim_functions(optim_funcs, solvefor_indices, x, 
                              inequality_direction='negative-null',
