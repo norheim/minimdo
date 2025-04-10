@@ -100,12 +100,28 @@ class SymbolicExpression(sp.Expr):
 
     def __str__(self):
         return str(self.expr)
-
+    
     def true_equals(self, other):
         if isinstance(other, SymbolicExpression):
             return self.expr.equals(other.expr)
         else:
             return self.expr.equals(other)
+        
+def wrap_sympy_function(func):
+    def wrapped(*args, **kwargs):
+        new_args = [a.expr if isinstance(a, SymbolicExpression) else a for a in args]
+        new_kwargs = {
+            k: (v.expr if isinstance(v, SymbolicExpression) else v)
+            for k, v in kwargs.items()
+        }
+        result = func(*new_args, **new_kwargs)
+        return SymbolicExpression(result)
+    return wrapped
+
+acos = wrap_sympy_function(sp.acos)
+sin = wrap_sympy_function(sp.sin)
+exp = wrap_sympy_function(sp.exp)
+sqrt = wrap_sympy_function(sp.sqrt)
 
 def symbolic(*args):
     return [SymbolicExpression(arg) for arg in args]

@@ -34,7 +34,7 @@ def build_leafs(sets, mfs):
             )
     else:
         return SetProps(
-            residual=EliminateAnalysisMergeResiduals(functions=[sets[cid].residuals for cid,_ in mfs.supersets]),
+            residual=EliminateAnalysisMergeResiduals(functions=[sets[cid].residual for cid,_ in mfs.supersets]),
             analysis=EliminateAnalysis([sets[cid].analysis for cid,_ in mfs.supersets])
             )
     
@@ -141,16 +141,6 @@ def interpet_constraint(sets, indices, constraints):
                 eq_constraints.append(lhs - rhs)
     return ineq_constraints, eq_constraints
 
-class MFunctionalSetLeaf():
-    def __init__(self, *constraints):
-        self.supersets = [(generate_short_id(), c) for c in constraints] if constraints is not None else []
-        self.elim = []
-        self.parallel = []
-        self.residuals = []
-
-    def functionalsubsetof(self, *supersets):
-        return MFunctionalSet(*supersets)
-
 class MFunctionalSet():
     def __init__(self, *supersets, constraints=None, objective=None):
         self.supersets = supersets
@@ -171,7 +161,7 @@ class MFunctionalSet():
     def minimize(self, objective):
         self.obj = objective
         return self
-       
+    
     def gather_sets(self):
         all_constraints = [(None, c) for c in self.constraints]
         constraints = list(self.supersets) #deep copy
@@ -183,7 +173,8 @@ class MFunctionalSet():
                 constraints += c.supersets
             else:
                 all_constraints.append(c)
-        sets, ineq_constraints, eq_constraints, obj, indices = get_constraints(all_constraints, self.obj.expr)
+        obj_expr = self.obj.expr if self.obj else None
+        sets, ineq_constraints, eq_constraints, obj, indices = get_constraints(all_constraints, obj_expr)
         ineq_constraints_merged = EliminateAnalysisMergeResiduals(functions=ineq_constraints) if ineq_constraints else []
         return sets, ineq_constraints_merged, eq_constraints, obj, indices
 
@@ -197,7 +188,7 @@ class MFunctionalSet():
         return MFS
     
     def build(self, sets=None, indices=None, return_residual=False):
-        sets, _, _, _, indices =self.gather_sets()
+        sets, _, _, _, indices =self.gather_sets() if (sets is None or indices is None) else (sets, None, None, None, indices)
         return build(sets, indices, self.elim, self.parallel, self.residuals, return_residual=return_residual)
     
     def build_opt(self, sets=None, indices=None, x0=None):
@@ -210,7 +201,19 @@ class MFunctionalSet():
         obj_function, dobj, xguess, constraints = self.build_opt(sets, indices, x0=x0array)
         xsol = optimize.minimize(obj_function, xguess, jac=dobj, constraints=constraints, method='SLSQP')
         return xsol
-    
+
+
+class MFunctionalSetLeaf(MFunctionalSet):
+    def __init__(self, *supersets, autoid=True):
+        supersets = supersets if supersets is not None else []
+        supersets = [(generate_short_id(), c) for c in supersets] if autoid else supersets
+        super().__init__(*supersets)
+
+    def build(self, sets=None, indices=None, return_residual=False):
+        sets, _, _, _, indices =self.gather_sets() if (sets is None or indices is None) else (sets, None, None, None, indices)
+        return build_leafs(sets, self)
+
+
 def univariate_set(mfs):
     sets, _ = mfs.gather_sets()
     return list(sets.values())[0]
