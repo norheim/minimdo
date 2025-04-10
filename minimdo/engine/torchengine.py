@@ -166,12 +166,15 @@ class EliminateAnalysis():
             return [f(x) for f in self.functions]
 
 class EliminateAnalysisMergeResiduals(EliminateAnalysis):
-    def __init__(self, analyses=None, functions=None):
-        super().__init__(analyses, functions)
+    def __init__(self, analyses=None, functions=None, flatten=False):
+        super().__init__(analyses, functions, flatten)
 
     def __call__(self, x):
         output = super().__call__(x)
-        return torch.cat(output)
+        if self.functions:
+            return torch.cat(output)
+        else:
+            return output
     
 class ParallelAnalysis():    
     # sharedvars have to be in the input
@@ -191,6 +194,16 @@ class ParallelAnalysis():
             y[output_indices] = a(x)[output_indices]
         return y
 
+def parallel_structure(analyses, functions, sharedvars):
+        # TODO: fix this
+        shared_structure = {key: a.structure[0].tolist() for a in analyses for key,val in a.structure_full.items()}
+        functional_structures = [elt for f in functions for elt in f.structure_full]
+        structure_full = ()
+        structure_full += get_function_structure(functional_structures, shared_structure)[2]
+        structure_full += tuple(list(dict.fromkeys([key]+val)) for key,val in shared_structure.items()  if key in sharedvars)
+        flattened_list = list(itertools.chain.from_iterable(structure_full))
+        structure_in = torch.tensor(list(dict.fromkeys(flattened_list)))
+        return structure_in, structure_full
 # Check that shared variables are in input structure
 class ParallelResiduals():
     def __init__(self, analyses, functions, sharedvars=None, indices=None):
@@ -204,14 +217,7 @@ class ParallelResiduals():
                 self.sharedvars = [idx for i in sharedvars for idx in indices[i]]
         self.analyses = analyses
         self.functions = functions
-        # TODO: fix this
-        shared_structure = {key: a.structure[0].tolist() for a in analyses for key,val in a.structure_full.items()}
-        functional_structures = [elt for f in functions for elt in f.structure_full]
-        structure_full = ()
-        structure_full += get_function_structure(functional_structures, shared_structure)[2]
-        structure_full += tuple(list(dict.fromkeys([key]+val)) for key,val in shared_structure.items()  if key in self.sharedvars)
-        flattened_list = list(itertools.chain.from_iterable(structure_full))
-        structure_in = torch.tensor(list(dict.fromkeys(flattened_list)))
+        structure_in, structure_full = parallel_structure(analyses, functions, self.sharedvars)
         self.structure = (structure_in, torch.tensor([]))
         self.structure_full = structure_full
 

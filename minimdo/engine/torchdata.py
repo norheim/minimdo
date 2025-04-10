@@ -183,13 +183,13 @@ def generate_optim_functions(optim_funcs, solvefor_indices, x,
         xc = x.detach()
         xc[solvefor_indices] = torch.from_numpy(y).to(x.dtype)
         dineq = jacobian(lambda w: eval_adaptive(w)[1], xc).numpy()
-        return dineq[:,solvefor_indices]
+        return np.take(dineq, solvefor_indices, axis=1) # replaces dineq[:,solvefor_indices], which is not consistent when solvefor_indices only has one item vs multiple items
     
     def deq(y=None):
         xc = x.detach()
         xc[solvefor_indices] = torch.from_numpy(y).to(x.dtype)
         deq = jacobian(lambda w: torch.cat(eval_adaptive(w)[2:]), xc).numpy()
-        return deq[:,solvefor_indices]
+        return np.take(deq, solvefor_indices, axis=1)
 
     xguess = x[solvefor_indices].detach().numpy()
     
