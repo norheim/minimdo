@@ -129,8 +129,10 @@ def symbolic(*args):
 def get_constraints(constraints, objective=None):
     symbols = set()
     for _, constraint in constraints:
-        symbols.update(constraint.lhs.free_symbols)
-        symbols.update(constraint.rhs.free_symbols)
+        if hasattr(constraint.lhs, 'free_symbols'):
+            symbols.update(constraint.lhs.free_symbols)
+        if hasattr(constraint.rhs, 'free_symbols'):
+            symbols.update(constraint.rhs.free_symbols)
     if objective is not None:
         symbols.update(objective.free_symbols)
     indices = generate_indices(symbols)
@@ -140,9 +142,9 @@ def get_constraints(constraints, objective=None):
     for cid, constraint in constraints:
         if isinstance(constraint, EqualsTo):
             lhs, rhs = constraint.lhs, constraint.rhs
-            if isinstance(lhs, sp.Expr) and isinstance(rhs, sp.Symbol):
+            if isinstance(lhs, (int, float, sp.Rational, sp.Float, sp.Expr)) and isinstance(rhs, sp.Symbol):
                 sets[cid] = AnalyticalSetSympy(lhs, outputvar=rhs, indices=indices)
-            elif isinstance(rhs, sp.Expr) and isinstance(lhs, sp.Symbol):
+            elif isinstance(rhs, (int, float, sp.Rational, sp.Float, sp.Expr)) and isinstance(lhs, sp.Symbol):
                 sets[cid] = AnalyticalSetSympy(rhs, outputvar=lhs, indices=indices)
         else:
             lhs, rhs = constraint.lhs, constraint.rhs

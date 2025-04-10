@@ -57,12 +57,13 @@ class AnalyticalSet():
         self.residual = residual_function
 
 def lambdify_with_variables(expression, variables=None):
-    variables = tuple(sorted(expression.free_symbols,
-                             key=lambda x: x.name)) if variables is None else variables
     if isinstance(expression, (int, float, sp.Rational, sp.Float)):
         tensor = torch.tensor([float(expression)], dtype=torch.float64)
         function = lambda : tensor
+        variables = tuple()
     else:
+        variables = tuple(sorted(expression.free_symbols,
+                            key=lambda x: x.name)) if variables is None else variables
         function = sp.lambdify(variables, expression, torch)
     return function, variables
 
