@@ -198,6 +198,8 @@ def generate_optim_functions(optim_funcs, solvefor_indices, x,
 from itertools import zip_longest
 
 def fmt(x):
+    if np.isclose(x, 0.0):
+        return '0'
     if abs(x) < 0.01:
         return f"{x:.2e}".replace('+0', '')
     elif abs(x) > 10000:

@@ -106,11 +106,11 @@ def build_opt(sets, indices, elim, parallel, res, eqs, ineq, obj, x0):
     else:
         T = RES
     
-    obj_eq_ineq = [obj, T, ineq] if T else [obj, ineq]
+    obj_eq_ineq = [obj, ineq, T] if T else [obj, ineq]
     P = EliminateAnalysis(built_elim_analysis, obj_eq_ineq)
     solvefor_indices = P.structure[0]
 
-    objidx, eqidx, ineqidx = 0,None,1
+    objidx, ineqidx = 0,1
     residx = 2 if T else None
     xguess, obj_function, ineq_function, eq_function, dobj, dineq, deq, hobj =  generate_optim_functions(P, solvefor_indices, x0, objective=objidx, residuals=residx, inequalities=ineqidx, inequality_direction='positive-null')
 
@@ -118,7 +118,7 @@ def build_opt(sets, indices, elim, parallel, res, eqs, ineq, obj, x0):
     constraints = [{'type': 'eq', 'fun': eq_function, 'jac': deq}] if eqlen >= 1 else []
     constraints.append({'type': 'ineq', 'fun': ineq_function, 'jac': dineq}) if ineqlen >= 1 else []
     
-    return obj_function, dobj, xguess, constraints
+    return obj_function, dobj, xguess, constraints, indices, solvefor_indices
 
 def interpet_constraint(sets, indices, constraints):
     ineq_constraints =[]
@@ -193,14 +193,13 @@ class MFunctionalSet():
     
     def build_opt(self, sets=None, indices=None, x0=None):
         sets, ineqs, eqs, obj, indices =self.gather_sets()
-        return build_opt(sets, indices, self.elim, self.parallel, self.residuals, eqs, ineqs, obj, x0)
+        x0array = load_vals(x0, indices, isdict=True)
+        return build_opt(sets, indices, self.elim, self.parallel, self.residuals, eqs, ineqs, obj, x0array)
     
     def solve(self, x0=None):
-        sets, indices =self.gather_sets()
-        x0array = load_vals(x0, indices, isdict=True)
-        obj_function, dobj, xguess, constraints = self.build_opt(sets, indices, x0=x0array)
+        obj_function, dobj, xguess, constraints, idxs, solidxs = self.build_opt(x0=x0)
         xsol = optimize.minimize(obj_function, xguess, jac=dobj, constraints=constraints, method='SLSQP')
-        return xsol
+        return xsol, idxs, solidxs
 
 
 class MFunctionalSetLeaf(MFunctionalSet):
