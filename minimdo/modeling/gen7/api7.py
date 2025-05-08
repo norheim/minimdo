@@ -8,6 +8,7 @@ import uuid, base64
 import sympy as sp
 from dataclasses import dataclass
 from scipy import optimize
+from trash.inputresolver import reassigneq
 
 @dataclass
 class SetProps:
@@ -170,7 +171,7 @@ class MFunctionalSet():
         self.obj = objective
         return self
     
-    def gather_sets(self, indices=None):
+    def gather_constraints(self):
         all_constraints = [(None, c) for c in self.constraints]
         constraints = list(self.supersets) #deep copy
         counter = 0
@@ -181,6 +182,10 @@ class MFunctionalSet():
                 constraints += c.supersets
             else:
                 all_constraints.append(c)
+        return all_constraints
+
+    def gather_sets(self, indices=None):
+        all_constraints = self.gather_constraints()
         obj_expr = self.obj.expr if self.obj else None
         sets, ineq_constraints, eq_constraints, obj, indices = get_constraints(all_constraints, obj_expr, indices=indices)
         ineq_constraints_merged = EliminateAnalysisMergeResiduals(functions=ineq_constraints) if ineq_constraints else []
@@ -208,12 +213,34 @@ class MFunctionalSet():
         obj_function, dobj, xguess, constraints, idxs, solidxs = self.build_opt(x0=x0)
         xsol = optimize.minimize(obj_function, xguess, jac=dobj, constraints=constraints, method='SLSQP')
         return xsol, idxs, solidxs
-
+    
+    def reconfigure(self, output_set):
+        all_supersets = []
+        for elt in self.supersets:
+            if hasattr(elt, "supersets"):
+                new_item = elt.reconfigure(output_set)
+            elif isinstance(elt, tuple):
+                cid, constraint = elt
+                if cid in output_set:
+                    new_item = (cid, reassigneq(constraint.lhs, constraint.rhs, output_set[cid].expr))
+                else:
+                    new_item = elt
+            all_supersets.append(new_item)
+        return MFunctionalSet(*all_supersets, constraints=self.constraints, objective=self.obj)
+    
+    def config_from_order(self, elim_order):
+        all_constraints = self.gather_constraints()
+        all_functionsets = {idval: c for idval, c in all_constraints if isinstance(c, EqualsTo)}
+        mfsets = [MFunctionalSetLeaf(*(all_functionsets[idval] for idval in sorted(group)), idvals=sorted(group)) for group in elim_order] #sorted to ensure order is preserved
+        MFS = MFunctionalSet(*mfsets, constraints=self.constraints, objective=self.obj)
+        MFS.elim = mfsets
+        return MFS
+            
 
 class MFunctionalSetLeaf(MFunctionalSet):
-    def __init__(self, *supersets, autoid=True):
+    def __init__(self, *supersets, autoid=True, idvals=None):
         supersets = supersets if supersets is not None else []
-        supersets = [(generate_short_id(), c) for c in supersets] if autoid else supersets
+        supersets = ([(generate_short_id(), c) for c in supersets] if not idvals else [(idval,c) for idval, c in zip(idvals, supersets)]) if autoid else supersets
         super().__init__(*supersets)
 
     def build(self, sets=None, indices=None, return_residual=False):
