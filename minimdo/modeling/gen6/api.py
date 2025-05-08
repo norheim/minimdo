@@ -126,7 +126,7 @@ sqrt = wrap_sympy_function(sp.sqrt)
 def symbolic(*args):
     return [SymbolicExpression(arg) for arg in args]
 
-def get_constraints(constraints, objective=None):
+def get_indices_only(constraints, objective=None):
     symbols = set()
     for _, constraint in constraints:
         if hasattr(constraint.lhs, 'free_symbols'):
@@ -136,6 +136,10 @@ def get_constraints(constraints, objective=None):
     if objective is not None:
         symbols.update(objective.free_symbols)
     indices = generate_indices(symbols)
+    return indices
+
+def get_constraints(constraints, objective=None, indices=None):
+    indices = indices if indices is not None else get_indices_only(constraints, objective)
     sets = {}
     ineq_constraints = []
     eq_constraints = []

@@ -11,6 +11,7 @@ from scipy import optimize
 
 @dataclass
 class SetProps:
+    indices: object
     analysis: object
     residual: object
 
@@ -25,22 +26,24 @@ def generate_short_id():
     short_id = encoded[:8].decode('ascii').rstrip('=')
     return short_id
 
-def build_leafs(sets, mfs):
+def build_leafs(sets, indices, mfs):
     if len(mfs.supersets) == 1:
         cid, _ = mfs.supersets[0]
         return SetProps(
+            indices=indices,
             residual=sets[cid].residual, 
             analysis=sets[cid].analysis
             )
     else:
         return SetProps(
+            indices=indices,
             residual=EliminateAnalysisMergeResiduals(functions=[sets[cid].residual for cid,_ in mfs.supersets]),
             analysis=EliminateAnalysis([sets[cid].analysis for cid,_ in mfs.supersets])
             )
     
 def build_recursive(sets, indices, mfs, return_residual=False):
     if isinstance(mfs, MFunctionalSetLeaf):
-        return build_leafs(sets, mfs)
+        return build_leafs(sets, indices, mfs)
     else:
         return build(sets, indices, mfs.elim, mfs.parallel, mfs.residuals, return_residual)
 
@@ -82,7 +85,7 @@ def build(sets, indices, elim, parallel, res, return_residual=False):
     else:
         An = R
         Res = EliminateAnalysisMergeResiduals(functions=[b.residual for b in built_elim])
-    return SetProps(analysis=An, residual=Res)
+    return SetProps(indices=indices, analysis=An, residual=Res)
 
 def build_opt(sets, indices, elim, parallel, res, eqs, ineq, obj, x0):
     built_res_obj = [build_recursive(sets, indices, mfs) for mfs in res]
@@ -106,12 +109,17 @@ def build_opt(sets, indices, elim, parallel, res, eqs, ineq, obj, x0):
     else:
         T = RES
     
-    obj_eq_ineq = [obj, ineq, T] if T else [obj, ineq]
-    P = EliminateAnalysis(built_elim_analysis, obj_eq_ineq)
+    obj_ineq_eq = [obj]
+    if ineq:
+        obj_ineq_eq.append(ineq)
+    if T:
+        obj_ineq_eq.append(T)
+    P = EliminateAnalysis(built_elim_analysis, obj_ineq_eq)
     solvefor_indices = P.structure[0]
 
-    objidx, ineqidx = 0,1
-    residx = 2 if T else None
+    objidx = 0
+    ineqidx = 1 if ineq else None
+    residx = 1 + (ineqidx==1) if T else None
     xguess, obj_function, ineq_function, eq_function, dobj, dineq, deq, hobj =  generate_optim_functions(P, solvefor_indices, x0, objective=objidx, residuals=residx, inequalities=ineqidx, inequality_direction='positive-null')
 
     ineqlen, eqlen = len(ineq_function(xguess)), len(eq_function(xguess))
@@ -162,7 +170,7 @@ class MFunctionalSet():
         self.obj = objective
         return self
     
-    def gather_sets(self):
+    def gather_sets(self, indices=None):
         all_constraints = [(None, c) for c in self.constraints]
         constraints = list(self.supersets) #deep copy
         counter = 0
@@ -174,7 +182,7 @@ class MFunctionalSet():
             else:
                 all_constraints.append(c)
         obj_expr = self.obj.expr if self.obj else None
-        sets, ineq_constraints, eq_constraints, obj, indices = get_constraints(all_constraints, obj_expr)
+        sets, ineq_constraints, eq_constraints, obj, indices = get_constraints(all_constraints, obj_expr, indices=indices)
         ineq_constraints_merged = EliminateAnalysisMergeResiduals(functions=ineq_constraints) if ineq_constraints else []
         return sets, ineq_constraints_merged, eq_constraints, obj, indices
 
@@ -188,11 +196,11 @@ class MFunctionalSet():
         return MFS
     
     def build(self, sets=None, indices=None, return_residual=False):
-        sets, _, _, _, indices =self.gather_sets() if (sets is None or indices is None) else (sets, None, None, None, indices)
-        return build(sets, indices, self.elim, self.parallel, self.residuals, return_residual=return_residual)
+        sets, _, _, _, indices_for_build =self.gather_sets(indices) if (sets is None or indices is None) else (sets, None, None, None, indices)
+        return build(sets, indices_for_build, self.elim, self.parallel, self.residuals, return_residual=return_residual)
     
     def build_opt(self, sets=None, indices=None, x0=None):
-        sets, ineqs, eqs, obj, indices =self.gather_sets()
+        sets, ineqs, eqs, obj, indices =self.gather_sets(indices)
         x0array = load_vals(x0, indices, isdict=True)
         return build_opt(sets, indices, self.elim, self.parallel, self.residuals, eqs, ineqs, obj, x0array)
     
@@ -209,8 +217,8 @@ class MFunctionalSetLeaf(MFunctionalSet):
         super().__init__(*supersets)
 
     def build(self, sets=None, indices=None, return_residual=False):
-        sets, _, _, _, indices =self.gather_sets() if (sets is None or indices is None) else (sets, None, None, None, indices)
-        return build_leafs(sets, self)
+        sets, _, _, _, indices =self.gather_sets(indices) if (sets is None or indices is None) else (sets, None, None, None, indices)
+        return build_leafs(sets, indices, self)
 
 
 def univariate_set(mfs):
