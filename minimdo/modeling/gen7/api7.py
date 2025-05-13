@@ -1,4 +1,5 @@
 from modeling.gen6.api import symbolic, get_constraints, EqualsTo
+from graph.workflow import SOLVER
 from engine.torchengine import EliminateAnalysis, EliminateAnalysisMergeResiduals, ParallelResiduals, ElimResidual, ParallelAnalysis, ipoptsolver, AnalyticalSetSympy, FunctionSympy
 from engine.torchdata import generate_optim_functions
 from functools import partial
@@ -215,6 +216,7 @@ class MFunctionalSet():
         return xsol, idxs, solidxs
     
     def reconfigure(self, output_set):
+        # recursive implementation
         all_supersets = []
         for elt in self.supersets:
             if hasattr(elt, "supersets"):
@@ -222,11 +224,14 @@ class MFunctionalSet():
             elif isinstance(elt, tuple):
                 cid, constraint = elt
                 if cid in output_set:
-                    new_item = (cid, reassigneq(constraint.lhs, constraint.rhs, output_set[cid].expr))
+                    new_lhs = output_set[cid].expr
+                    new_rhs = reassigneq(constraint.lhs, constraint.rhs, new_lhs)
+                    new_item = (cid, EqualsTo(new_lhs, new_rhs))
                 else:
                     new_item = elt
             all_supersets.append(new_item)
-        return MFunctionalSet(*all_supersets, constraints=self.constraints, objective=self.obj)
+        newMFS = MFunctionalSet(*all_supersets, constraints=self.constraints, objective=self.obj)
+        return newMFS
     
     def config_from_order(self, elim_order):
         all_constraints = self.gather_constraints()
@@ -235,6 +240,28 @@ class MFunctionalSet():
         MFS = MFunctionalSet(*mfsets, constraints=self.constraints, objective=self.obj)
         MFS.elim = mfsets
         return MFS
+    
+    def config_from_workflow(self, workflow_order):
+        MFS_root = MFunctionalSet()
+        new_mfs = None
+        all_constraints = self.gather_constraints()
+        all_functionsets = {idval: c for idval, c in all_constraints if isinstance(c, EqualsTo)}
+        for elt in workflow_order:
+            if elt[0] == SOLVER:
+                if new_mfs is not None:
+                    new_mfs.elim = [new_mfs] # HACK for build_opt to work
+                new_mfs = MFunctionalSetLeaf()
+                MFS_root.functionalsubsetof(new_mfs)
+            else:
+                constraint_idx = elt[1]
+                mf_constraint = all_functionsets[constraint_idx]
+                new_mfs.supersets += ((constraint_idx, mf_constraint),)
+        new_mfs.elim = [new_mfs]
+        if len(MFS_root.supersets) == 1:
+            MFS_root = MFS_root.supersets[0]
+        MFS_root.constraints = self.constraints
+        MFS_root.obj = self.obj
+        return MFS_root # FIX: this should be the root solver 
             
 
 class MFunctionalSetLeaf(MFunctionalSet):
