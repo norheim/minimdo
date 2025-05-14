@@ -121,6 +121,7 @@ def wrap_sympy_function(func):
 acos = wrap_sympy_function(sp.acos)
 sin = wrap_sympy_function(sp.sin)
 exp = wrap_sympy_function(sp.exp)
+log = wrap_sympy_function(sp.log)
 sqrt = wrap_sympy_function(sp.sqrt)
 
 def symbolic(*args):
@@ -146,10 +147,11 @@ def get_constraints(constraints, objective=None, indices=None):
     for cid, constraint in constraints:
         if isinstance(constraint, EqualsTo):
             lhs, rhs = constraint.lhs, constraint.rhs
-            if isinstance(lhs, (int, float, sp.Rational, sp.Float, sp.Expr)) and isinstance(rhs, sp.Symbol):
-                sets[cid] = AnalyticalSetSympy(lhs, outputvar=rhs, indices=indices)
-            elif isinstance(rhs, (int, float, sp.Rational, sp.Float, sp.Expr)) and isinstance(lhs, sp.Symbol):
+            # check LHS first - otherwise will get bug
+            if isinstance(rhs, (int, float, sp.Rational, sp.Float, sp.Expr)) and isinstance(lhs, sp.Symbol):
                 sets[cid] = AnalyticalSetSympy(rhs, outputvar=lhs, indices=indices)
+            elif isinstance(lhs, (int, float, sp.Rational, sp.Float, sp.Expr)) and isinstance(rhs, sp.Symbol):
+                sets[cid] = AnalyticalSetSympy(lhs, outputvar=rhs, indices=indices)
         else:
             lhs, rhs = constraint.lhs, constraint.rhs
             # check if it is <= or >= based on sp.LessThan and sp.GreaterThan
