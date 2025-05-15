@@ -75,7 +75,7 @@ def build(sets, indices, elim, parallel, res, return_residual=False):
     R = EliminateAnalysis(built_elim_analysis, T, flatten=True)
     
     if T:
-        solvefor_parallel = torch.tensor([p.structure[1] for p in built_parallel_analysis], dtype=torch.int64)
+        solvefor_parallel = torch.concat([p.structure[1] for p in built_parallel_analysis])
         solvefor_residual = torch.tensor([r.analysis.structure[1] for r in built_res_obj], dtype=torch.int64)
         solvefor= torch.cat([solvefor_parallel, solvefor_residual])
         bnds = [(None, None) for _ in solvefor]
