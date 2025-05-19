@@ -1,8 +1,8 @@
-from foundations.functionals import encode_sympy
-from foundations.functional_noobj import concatenate_residuals
-from foundations.functional_noobj import feed_forward
-from foundations.functional_noobj import residual_solver
-from foundations.functional_noobj import eliminate_vars
+from engine.foundations.functionals import encode_sympy
+from engine.foundations.functional_noobj import concatenate_residuals
+from engine.foundations.functional_noobj import feed_forward
+from engine.foundations.functional_noobj import residual_solver
+from engine.foundations.functional_noobj import eliminate_vars
 from modeling.gen4.arghandling import Encoding, decode, encode  
 from modeling.gen4.compute import EncodedFunction  
 from modeling.gen2.transformations import partial_inversion

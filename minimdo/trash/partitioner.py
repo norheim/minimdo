@@ -1,4 +1,4 @@
-from inputresolver import default_in
+from trash.inputresolver import default_in
 
 def default_out_condensation(alleqs, eqlist):
     out = set()
