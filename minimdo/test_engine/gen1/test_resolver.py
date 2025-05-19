@@ -2,9 +2,11 @@ import pytest
 import sympy as sp
 from sympy import S
 import networkx as nx
-from modeling.compute import args_in_order, Equation, coupled_run
-from problemgen.gen1.resultscheck import get_outputs
-from trash.inputresolver import reassign, getdofs, set_ins, mdf_order
+from trash.inputresolver import Equation
+from modeling.gen1.compute import args_in_order
+from engine.gen1mdao.openmdao import coupled_run
+from engine.gen1mdao.openmdao import get_outputs
+from trash.inputresolver import reassign, default_in, set_ins, mdf_order
 import numpy as np
 import openmdao.api as om
 
@@ -68,12 +70,12 @@ def test_getdofs():
         2: (x4, x1+x5),
         3: (x3, x1+x2)
     }
-    ins = getdofs(eqs)
+    ins = default_in(eqs)
     assert {x1,x2,x5}==ins
 
 def test_mdf_order_determined():
     (x1,x2,x3,x4), eqs, eqvars, default_output = generate_test_eqs()
-    ins = getdofs(eqs)
+    ins = default_in(eqs)
     # make the system determined
     for idx, elt in enumerate(ins):
         eqname = 'in{}'.format(idx)

@@ -1,6 +1,6 @@
 import networkx as nx
 from graph.graphview import digraph_repr
-from modeling.compute import addsolver, SOLVER, INTER, END, RefNode, SolverNode
+from modeling.gen2.nesting import addsolver, SOLVER, INTER, END, RefNode, SolverNode
 from anytree import LevelOrderIter, PreOrderIter
 from trash.operatorsold import merge_pure, standardize
 

@@ -7,7 +7,7 @@ from modeling.gen3.nesting import addequation, calculateval
 from modeling.gen4.ipoptsolver import setup_ipopt
 from graph.workflow import OPT, NEQ, EQ, OBJ, SOLVE
 from graph.graphutils import VAR, COMP, SOLVER
-from solver.runpipeline import nestedform_to_mdao
+from engine.gen2mdao.runpipeline import nestedform_to_mdao
 
 def find_indices(list1, list2):
     index_dict = {value: index for index, value in enumerate(list1)}

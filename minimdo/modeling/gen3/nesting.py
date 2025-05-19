@@ -7,7 +7,7 @@ from modeling.unitutils import get_unit, ureg
 from modeling.compute import Var
 from graph.workflow import NEQ, EQ, OBJ, OPT, SOLVE
 from graph.graphutils import VAR, COMP, SOLVER, all_variables, copy_dicts, edges_to_Ein_Eout
-from solver.runpipeline import nestedform_to_mdao
+from engine.gen2mdao.runpipeline import nestedform_to_mdao
 from modeling.unitutils import fx_with_units
 import numpy as np
 

@@ -3,7 +3,7 @@ import openmdao.api as om
 from graph.graphutils import root_solver, nested_sources, VAR, namefromid
 from graph.nestedgraph import root_sources
 from graph.workflow import EXPL, IMPL, SOLVE, OPT, EQ, NEQ, OBJ
-from solver.executionblocks import addexpcomp, addimpcomp, addsolver, addoptimizer, addoptfunc
+from engine.gen2mdao.executionblocks import addexpcomp, addimpcomp, addsolver, addoptimizer, addoptfunc
 
 architecture_mappings = {
         EXPL: addexpcomp,

@@ -1,6 +1,7 @@
 from enum import Enum
 from anytree import NodeMixin, PreOrderIter
 from trash.inputresolver import eqvars, default_out, default_in
+from modeling.gen1.compute import eqvar
 
 NodeTypes = Enum('NodeTypes', 'INTER END SOLVER OPT')
 INTER, END, SOLVER, OPT = NodeTypes.INTER, NodeTypes.END, NodeTypes.SOLVER, NodeTypes.OPT

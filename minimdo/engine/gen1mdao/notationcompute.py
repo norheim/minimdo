@@ -1,5 +1,5 @@
 import openmdao.api as om
-from problemgen.gen1.openmdao import Expcomp, Evaluable
+from engine.gen1mdao.openmdao import Expcomp, Evaluable
 from modeling.compute import normalize_name
 
 class Impcomp(om.ImplicitComponent):

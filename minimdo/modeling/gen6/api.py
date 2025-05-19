@@ -1,8 +1,7 @@
-from typing import Any
-import sympy as sp
-from engine.torchengine import AnalyticalSetSympy, FunctionSympy, EliminateAnalysisMergeResiduals, ParallelResiduals, ElimResidual, EliminateAnalysis, ipoptsolvercon
+from engine.torchengine import AnalyticalSetSympy, FunctionSympy, EliminateAnalysisMergeResiduals, ParallelResiduals, ElimResidual
 from engine.torchdata import generate_indices, load_vals, generate_optim_functions
 from scipy import optimize
+import sympy as sp
 import torch
 
 class SymbolicExpression(sp.Expr):

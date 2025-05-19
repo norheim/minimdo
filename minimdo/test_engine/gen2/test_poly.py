@@ -2,7 +2,7 @@ from utils.polycasebuilder import generate_random_polynomials, get_arg_mapping, 
 from utils.randomstructure import generate_random_prob
 from graph.graphutils import VAR, COMP, SOLVER, edges_to_Ein_Eout, sinks, sources, namefromid, all_components
 from graph.workflow import OBJ, NEQ, EQ, OPT
-from solver.runpipeline import nestedform_to_mdao
+from engine.gen2mdao.runpipeline import nestedform_to_mdao
 import numpy as np
 from modeling.gen2.execution import Component
 from graph.operators import sort_scc, reorder_merge_solve
