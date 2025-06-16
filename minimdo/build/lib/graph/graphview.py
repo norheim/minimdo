@@ -6,7 +6,7 @@ import numpy as np
 import sympy.printing as printing
 from anytree import RenderTree, PreOrderIter
 from trash.notationtree import all_vars_from_incidence
-from modeling.compute import INTER, END
+from src.v1.symbolic import INTER, END
 
 def getallvars(eqs, sympy=True):
     vrs = set()

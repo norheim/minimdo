@@ -1,5 +1,5 @@
 import openmdao.api as om
-from modeling.compute import Expcomp, Evaluable
+from src.v1.symbolic import Expcomp, Evaluable
 from utils.utils import normalize_name
 
 class Impcomp(om.ImplicitComponent):

@@ -1,8 +1,8 @@
 import networkx as nx
 from graph.graphview import digraph_repr
-from modeling.compute import addsolver, SOLVER, INTER, END, RefNode, SolverNode
+from src.v1.symbolic import addsolver, SOLVER, INTER, END, RefNode, SolverNode
 from anytree import LevelOrderIter, PreOrderIter
-from trash.operatorsold import merge_pure, standardize
+from src.v1tree.operatorsold import merge_pure, standardize
 
 def sortf(e):
     idx, fx = e

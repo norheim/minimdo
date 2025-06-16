@@ -7,7 +7,7 @@ from autograd import grad
 import autograd.numpy as anp
 import openmdao.api as om
 from pint import UnitRegistry
-from trash.inputresolver import reassigneq, idx_eqlist, eqvars, default_out, default_in
+from src.v1.inputresolver import reassigneq, idx_eqlist, eqvars, default_out, default_in
 from itertools import count
 from anytree import Node, NodeMixin, PreOrderIter
 from enum import Enum

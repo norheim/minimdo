@@ -4,7 +4,7 @@ from modeling.execution import edges_from_components, residual_component
 from solver.runpipeline import nestedform_to_mdao
 from graph.workflow import OPT, NEQ, EQ, OBJ, SOLVE
 from graph.graphutils import VAR, COMP, SOLVER
-from modeling.compute import Var
+from src.v1.symbolic import Var
 from modeling.ipoptsolver import compute_residuals_generic, compute_structure, ProblemIPOPT
 from modeling.transformations import flatten_component
 from jax import jacobian

@@ -4,7 +4,7 @@ from modeling.arghandling import decode, encode, merge_encoders
 from modeling.arghandling import flatten_args
 from modeling.execution import sympy_fx_inputs
 from modeling.transformations import partial_inversion
-from modeling.compute import Var
+from src.v1.symbolic import Var
 from scipy.optimize import fsolve
 from scipy.optimize import minimize
 from scipy.optimize import NonlinearConstraint

@@ -1,10 +1,10 @@
-from trash.inputresolver import reassigneq
-from modeling.gen2.execution import Component
+from src.v1.inputresolver import reassigneq
+from src.v2.execution import Component
 import sympy as sp
 from collections import OrderedDict
 from graph.graphutils import all_variables, Node, VAR
 from graph.operators import eqv_to_edges_tree
-from modeling.compute import Var
+from src.v1.symbolic import Var
 from utils.randompoly import random_bijective_polynomial
 import numpy as np
 

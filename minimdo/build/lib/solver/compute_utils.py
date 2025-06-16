@@ -1,5 +1,5 @@
-from trash.inputresolver import getallvars
-from modeling.compute import Evaluable
+from src.v1.inputresolver import getallvars
+from src.v1.symbolic import Evaluable
 
 def get_outputs(eqs, model):
     vrs = getallvars(eqs)

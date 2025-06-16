@@ -5,8 +5,8 @@ import jax.numpy as anp
 import sympy as sp
 #from autograd import jacobian
 from jax import jacobian
-from modeling.unitutils import fx_with_units
-from modeling.compute import ureg
+from src.v2.units import fx_with_units
+from src.v1.symbolic import ureg
 from graph.graphutils import transform_E, filter_comps
 
 import jax

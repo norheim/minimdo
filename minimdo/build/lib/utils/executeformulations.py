@@ -1,7 +1,7 @@
 import numpy as np
 import openmdao.api as om
-from modeling.compute import buildidpvars
-from modeling.gen1.notationcompute import explicit, solver
+from src.v1.symbolic import buildidpvars
+from src.v1.mdaobuild import explicit, solver
 
 # FUNCTIONS TO MAKE THE ARCHITECTURE EXECUTABLE AND RUN IT
 # TODO: remove all 

@@ -7,9 +7,9 @@ import numpy as np
 from modeling.execution import Component
 from graph.operators import sort_scc, reorder_merge_solve
 from graph.graphview import bipartite_repr
-from trash.inputresolver import getallvars, direct_eqs, invert_edges
+from src.v1.inputresolver import getallvars, direct_eqs, invert_edges
 from presolver.tearing import min_max_scc, outset_from_solution
-from modeling.compute import Var
+from src.v1.symbolic import Var
 
 nodetyperepr = {VAR: 'x_{{{}}}', COMP: 'f_{}', SOLVER: 's_{}'}
 #namefunc = namefromid(nodetyperepr)

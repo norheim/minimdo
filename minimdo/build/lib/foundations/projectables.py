@@ -6,7 +6,7 @@ from foundations.functional_noobj import eliminate_vars
 from modeling.arghandling import Encoding, decode, encode  
 from modeling.arghandling import EncodedFunction  
 from modeling.transformations import partial_inversion
-from modeling.compute import Var
+from src.v1.symbolic import Var
 from itertools import chain
 import sympy as sp
 import numpy as np

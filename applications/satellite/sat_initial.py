@@ -1,5 +1,5 @@
-from modeling.compute import Var, Par
-from modeling.gen3.nesting import Model, adda, addsolver
+from src.v1.symbolic import Var, Par
+from src.v3.nesting import Model, adda, addsolver
 from applications.satellite.constants import μ, R, Q, k, c, G, H_int, ρ_int
 import numpy as np
 import sympy as sp

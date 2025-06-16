@@ -1,4 +1,4 @@
-from modeling.compute import Par, ureg
+from src.v1.symbolic import Par, ureg
 from scipy import interpolate
 import numpy as np
 import jax.numpy as anp

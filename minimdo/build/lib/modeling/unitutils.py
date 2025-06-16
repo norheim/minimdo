@@ -1,6 +1,6 @@
 import sympy as sp
 import numpy as np
-from modeling.compute import Var, ureg
+from src.v1.symbolic import Var, ureg
 import jax.numpy as anp
 from math import isclose
 #import autograd.numpy as anp
