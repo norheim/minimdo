@@ -2,7 +2,7 @@ from networkx.algorithms.bipartite import random_graph as bipartite_random_graph
 import networkx as nx
 import numpy as np
 from graph.graphutils import edges_E
-from presolver.tearing import dir_graph
+from src.v2.tearing import dir_graph
 
 def generate_random_prob(n_eqs, n_vars, seed=8, sparsity=1.0, independent_of_n=False):
     addfactor = 0 if independent_of_n else n_vars

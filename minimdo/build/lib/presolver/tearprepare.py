@@ -1,5 +1,5 @@
 from graph.graphutils import copy_dicts, all_variables, all_edges
-from presolver.tearing import dir_graph, min_arc_set_assign
+from src.v2.tearing import dir_graph, min_arc_set_assign
 
 def execute_tearing(edges, not_input, not_output):
     edges_for_solving = copy_dicts(edges)

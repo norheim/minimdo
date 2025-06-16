@@ -8,7 +8,7 @@ from modeling.execution import Component
 from graph.operators import sort_scc, reorder_merge_solve
 from graph.graphview import bipartite_repr
 from src.v1.inputresolver import getallvars, direct_eqs, invert_edges
-from presolver.tearing import min_max_scc, outset_from_solution
+from src.v2.tearing import min_max_scc, outset_from_solution
 from src.v1.symbolic import Var
 
 nodetyperepr = {VAR: 'x_{{{}}}', COMP: 'f_{}', SOLVER: 's_{}'}
