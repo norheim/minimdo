@@ -76,7 +76,7 @@ def bipartite_repr(eqvars, direct=False):
     return B, edges
 
 def digraph_repr(eqvars, default_output, intermediary=False):
-    edges = [(inp, (eq if intermediary else default_output[eq])) for eq, inps in eqvars.items() for inp in inps if inp != default_output[eq]]
+    edges = [(inp, (eq if intermediary else default_output[eq])) for eq, inps in eqvars.items() for inp in inps if (default_output[eq] is not None) and (inp != default_output[eq])]
     if intermediary:
         # end components might have none has their output
         edges += [(key,val) for key,val in default_output.items() if val != None ]
