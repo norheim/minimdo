@@ -8,7 +8,8 @@ import os
 import re
 
 def generate_indices(keys):
-    indices = {k: torch.tensor([idx], dtype=torch.long) for idx,k in enumerate(keys)}
+    sorted_keys = sorted(keys) if isinstance(keys, set) else keys
+    indices = {k: torch.tensor([idx], dtype=torch.long) for idx,k in enumerate(sorted_keys)}
     return indices
 
 def reverse_indices(idxvectors, indices):
@@ -95,6 +96,10 @@ def load_vals(file_name, indices, path_to_file='../applications/data/', x0=None,
             xval = xval.to(dtype)
         x0[val] = xval
     return x0
+
+def unload_vals(x, indices):
+    return {str(key): x[val].item() for key,val in indices.items()}
+
 
 def perturb(x0, delta, indices, seed=42):
     n = len(x0)
@@ -198,7 +203,7 @@ def generate_optim_functions(optim_funcs, solvefor_indices, x,
 from itertools import zip_longest
 
 def fmt(x):
-    if np.isclose(x, 0.0):
+    if np.isclose(x, 0.0, atol=1e-12):
         return '0'
     if abs(x) < 0.01:
         return f"{x:.2e}".replace('+0', '')
@@ -207,7 +212,8 @@ def fmt(x):
     else:
         return f"{x:.3f}".rstrip('0').rstrip('.')
 
-def print_formatted_table(xsol, indices, idxrev, subset=None):
+def print_formatted_table(xsol, indices, idxrev=None, subset=None):
+    idxrev = {var.item():key for key,var in indices.items()} if idxrev is None else idxrev
     subset = subset if subset is not None else torch.tensor(list(indices.values()))
     header = [str(idxrev[k.item()]) for k in subset]
     xdisp = [x[subset] for x in xsol]

@@ -127,15 +127,18 @@ def symbolic(*args):
     return [SymbolicExpression(arg) for arg in args]
 
 def get_indices_only(constraints, objective=None):
-    symbols = set()
+    symbols = []
     for _, constraint in constraints:
         if hasattr(constraint.lhs, 'free_symbols'):
-            symbols.update(constraint.lhs.free_symbols)
+            symbols.extend(constraint.lhs.free_symbols)
         if hasattr(constraint.rhs, 'free_symbols'):
-            symbols.update(constraint.rhs.free_symbols)
+            symbols.extend(constraint.rhs.free_symbols)
+    
     if objective is not None:
-        symbols.update(objective.free_symbols)
-    indices = generate_indices(symbols)
+        symbols.extend(objective.free_symbols)
+    # Remove duplicates while preserving order
+    unique_symbols = tuple(dict.fromkeys(symbols))
+    indices = generate_indices(unique_symbols)
     return indices
 
 def get_constraints(constraints, objective=None, indices=None):
@@ -159,7 +162,7 @@ def get_constraints(constraints, objective=None, indices=None):
             elif isinstance(constraint, sp.GreaterThan):
                 ineq_constraints.append(FunctionSympy(rhs - lhs, indices))
             else:
-                eq_constraints.append(lhs - rhs)
+                eq_constraints.append(FunctionSympy(rhs - lhs, indices))
     obj = FunctionSympy(objective, indices) if objective is not None else None        
     return sets, ineq_constraints, eq_constraints, obj, indices
 

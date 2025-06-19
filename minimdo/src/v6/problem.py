@@ -49,8 +49,20 @@ def build_recursive(sets, indices, mfs, return_residual=False):
     else:
         return build(sets, indices, mfs.elim, mfs.parallel, mfs.residuals, return_residual)
 
+def universal_combine(tensors):
+    if not tensors:
+        return torch.tensor([], dtype=torch.int64)
+    tensors = [t.unsqueeze(0) if t.dim() == 0 else t for t in tensors]
+    return torch.cat(tensors)
+
+def get_sharedvars(built_parallel_analysis):
+    elt1, elt2 = zip(*[elt.structure for elt in built_parallel_analysis])
+    sharedidxs = set([elt.item() for elt in torch.cat(elt1)]).intersection(set([elt.item() for elt in torch.cat(elt2)]))
+    return sharedidxs
+    
+
 # OLD version: parallel and elim will contain analysis objects and res will contain residual objects
-def build(sets, indices, elim, parallel, res, return_residual=False):
+def build(sets, indices, elim, parallel, res, eliminate_parallelstatevars=True, return_residual=False):
     built_res_obj = [build_recursive(sets, indices, mfs) for mfs in res]
     built_res = [b.residual for b in built_res_obj]
     built_parallel = [build_recursive(sets, indices, mfs) for mfs in parallel]
@@ -63,20 +75,22 @@ def build(sets, indices, elim, parallel, res, return_residual=False):
     else:
         RES = []
 
-    if built_parallel_analysis and not built_res:
-        T = [ParallelResiduals(analyses=built_parallel_analysis, 
-                               functions=[])]
-    elif built_res:
-        T1 = [ParallelResiduals(analyses=built_parallel_analysis, functions=built_res)]
-        T = [EliminateAnalysisMergeResiduals(functions=T1, flatten=True)]
+    if built_parallel_analysis:
+        sharedidxs = get_sharedvars(built_parallel_analysis) if  eliminate_parallelstatevars else None
+        if not built_res:
+            T = [ParallelResiduals(analyses=built_parallel_analysis, 
+                               functions=[], sharedvars=sharedidxs)]
+        else:
+            T1 = [ParallelResiduals(analyses=built_parallel_analysis, functions=built_res, sharedvars=sharedidxs)]
+            T = [EliminateAnalysisMergeResiduals(functions=T1, flatten=True)]
     else:
         T = RES
     
     R = EliminateAnalysis(built_elim_analysis, T, flatten=True)
     
     if T:
-        solvefor_parallel = torch.concat([p.structure[1] for p in built_parallel_analysis])
-        solvefor_residual = torch.tensor([r.analysis.structure[1] for r in built_res_obj], dtype=torch.int64)
+        solvefor_parallel = universal_combine([p.structure[1] for p in built_parallel_analysis])
+        solvefor_residual = universal_combine([r.analysis.structure[1] for r in built_res_obj])
         solvefor= torch.cat([solvefor_parallel, solvefor_residual])
         bnds = [(None, None) for _ in solvefor]
         ipsolver = partial(ipoptsolver, bnds_problem=bnds)
@@ -89,7 +103,7 @@ def build(sets, indices, elim, parallel, res, return_residual=False):
         Res = EliminateAnalysisMergeResiduals(functions=[b.residual for b in built_elim])
     return SetProps(indices=indices, analysis=An, residual=Res)
 
-def build_opt(sets, indices, elim, parallel, res, eqs, ineq, obj, x0):
+def build_opt(sets, indices, elim, parallel, res, eqs, ineq, obj, x0, eliminate_parallelstatevars=True):
     built_res_obj = [build_recursive(sets, indices, mfs) for mfs in res]
     built_res = [b.residual for b in built_res_obj]+eqs
     built_parallel = [build_recursive(sets, indices, mfs) for mfs in parallel]
@@ -102,12 +116,14 @@ def build_opt(sets, indices, elim, parallel, res, eqs, ineq, obj, x0):
     else:
         RES = None
 
-    if built_parallel_analysis and not built_res:
-        T = ParallelResiduals(analyses=built_parallel_analysis, 
-                               functions=[])
-    elif built_res:
-        T1 = [ParallelResiduals(analyses=built_parallel_analysis, functions=built_res)]
-        T = EliminateAnalysisMergeResiduals(functions=T1, flatten=True)
+    if built_parallel_analysis:
+        sharedidxs = get_sharedvars(built_parallel_analysis+[ineq]+eqs+[obj]) if  eliminate_parallelstatevars else None
+        if not built_res:
+            T = [ParallelResiduals(analyses=built_parallel_analysis, 
+                               functions=[], sharedvars=sharedidxs)]
+        else:
+            T1 = [ParallelResiduals(analyses=built_parallel_analysis, functions=built_res, sharedvars=sharedidxs)]
+            T = [EliminateAnalysisMergeResiduals(functions=T1, flatten=True)]
     else:
         T = RES
     
@@ -206,9 +222,9 @@ class MFunctionalSet():
         return build(sets, indices_for_build, self.elim, self.parallel, self.residuals, return_residual=return_residual)
     
     def build_opt(self, sets=None, indices=None, x0=None):
-        sets, ineqs, eqs, obj, indices =self.gather_sets(indices)
-        x0array = load_vals(x0, indices, isdict=True)
-        return build_opt(sets, indices, self.elim, self.parallel, self.residuals, eqs, ineqs, obj, x0array)
+        sets, ineqs, eqs, obj, indices_new =self.gather_sets(indices)
+        x0array = load_vals(x0, indices_new, isdict=True)
+        return build_opt(sets, indices_new, self.elim, self.parallel, self.residuals, eqs, ineqs, obj, x0array)
     
     def solve(self, x0=None):
         obj_function, dobj, xguess, constraints, idxs, solidxs = self.build_opt(x0=x0)
