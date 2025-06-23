@@ -142,7 +142,7 @@ def get_full_structure(analysis_structures=None, functional_structures=None):
     return structure_in, structure_out, full_structure
 
 class EliminateAnalysis():
-    def __init__(self, analyses=None, functions=None, flatten=False):
+    def __init__(self, analyses=None, functions=None, flatten=False, counter=False):
         self.flatten = flatten
         self.analyses_missing = analyses is None
         self.analyses = analyses if analyses else []
@@ -152,6 +152,8 @@ class EliminateAnalysis():
             [felt for f in self.functions for felt in f.structure_full])
         self.structure = (structure_input, structure_output)
         self.structure_full = structure_full
+        self.countdisp = counter
+        self.counter = 0
 
     def __call__(self, x):
         for a in self.analyses:
