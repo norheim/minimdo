@@ -13,6 +13,7 @@ from src.v1.inputresolver import reassigneq
 
 @dataclass
 class SetProps:
+    idxrev: object
     indices: object
     analysis: object
     residual: object
@@ -29,22 +30,25 @@ def generate_short_id():
     return short_id
 
 def build_leafs(sets, indices, mfs):
+    idxrevval = {var.item():key for key,var in indices.items()} 
     if len(mfs.supersets) == 1:
         cid, _ = mfs.supersets[0]
         return SetProps(
+            idxrev=idxrevval,
             indices=indices,
             residual=sets[cid].residual, 
             analysis=sets[cid].analysis
             )
     else:
         return SetProps(
+            idxrev=idxrevval,
             indices=indices,
             residual=EliminateAnalysisMergeResiduals(functions=[sets[cid].residual for cid,_ in mfs.supersets]),
             analysis=EliminateAnalysis([sets[cid].analysis for cid,_ in mfs.supersets])
             )
     
 def build_recursive(sets, indices, mfs, return_residual=False):
-    if isinstance(mfs, MFunctionalSetLeaf):
+    if isinstance(mfs, ConstraintSet):
         return build_leafs(sets, indices, mfs)
     else:
         return build(sets, indices, mfs.elim, mfs.parallel, mfs.residuals, return_residual)
@@ -63,6 +67,7 @@ def get_sharedvars(built_parallel_analysis):
 
 # OLD version: parallel and elim will contain analysis objects and res will contain residual objects
 def build(sets, indices, elim, parallel, res, eliminate_parallelstatevars=True, return_residual=False):
+    idxrevval = {var.item():key for key,var in indices.items()} 
     built_res_obj = [build_recursive(sets, indices, mfs) for mfs in res]
     built_res = [b.residual for b in built_res_obj]
     built_parallel = [build_recursive(sets, indices, mfs) for mfs in parallel]
@@ -76,7 +81,7 @@ def build(sets, indices, elim, parallel, res, eliminate_parallelstatevars=True, 
         RES = []
 
     if built_parallel_analysis:
-        sharedidxs = get_sharedvars(built_parallel_analysis) if  eliminate_parallelstatevars else None
+        sharedidxs = torch.tensor(list(get_sharedvars(built_parallel_analysis)), dtype=torch.int64) if  eliminate_parallelstatevars else None
         if not built_res:
             T = [ParallelResiduals(analyses=built_parallel_analysis, 
                                functions=[], sharedvars=sharedidxs)]
@@ -89,7 +94,7 @@ def build(sets, indices, elim, parallel, res, eliminate_parallelstatevars=True, 
     R = EliminateAnalysis(built_elim_analysis, T, flatten=True)
     
     if T:
-        solvefor_parallel = universal_combine([p.structure[1] for p in built_parallel_analysis])
+        solvefor_parallel = universal_combine([p.structure[1] for p in built_parallel_analysis]) if not eliminate_parallelstatevars else sharedidxs
         solvefor_residual = universal_combine([r.analysis.structure[1] for r in built_res_obj])
         solvefor= torch.cat([solvefor_parallel, solvefor_residual])
         bnds = [(None, None) for _ in solvefor]
@@ -101,7 +106,7 @@ def build(sets, indices, elim, parallel, res, eliminate_parallelstatevars=True, 
     else:
         An = R
         Res = EliminateAnalysisMergeResiduals(functions=[b.residual for b in built_elim])
-    return SetProps(indices=indices, analysis=An, residual=Res)
+    return SetProps(idxrev=idxrevval, indices=indices, analysis=An, residual=Res)
 
 def build_opt(sets, indices, elim, parallel, res, eqs, ineq, obj, x0, eliminate_parallelstatevars=True):
     built_res_obj = [build_recursive(sets, indices, mfs) for mfs in res]
@@ -167,7 +172,7 @@ def interpet_constraint(sets, indices, constraints):
                 eq_constraints.append(lhs - rhs)
     return ineq_constraints, eq_constraints
 
-class MFunctionalSet():
+class FunctionalSet():
     def __init__(self, *supersets, constraints=None, objective=None):
         self.supersets = supersets
         self.elim = []
@@ -211,7 +216,7 @@ class MFunctionalSet():
     def config(self, elim=None, parallel=None, residuals=None):
         if elim is None and parallel is None and residuals is None:
             return self
-        MFS = MFunctionalSet(*self.supersets, constraints=self.constraints, objective=self.obj)
+        MFS = FunctionalSet(*self.supersets, constraints=self.constraints, objective=self.obj)
         MFS.elim = elim if elim is not None else []
         MFS.parallel = parallel if parallel is not None else []
         MFS.residuals = residuals if residuals is not None else []
@@ -246,19 +251,19 @@ class MFunctionalSet():
                 else:
                     new_item = elt
             all_supersets.append(new_item)
-        newMFS = MFunctionalSet(*all_supersets, constraints=self.constraints, objective=self.obj)
+        newMFS = FunctionalSet(*all_supersets, constraints=self.constraints, objective=self.obj)
         return newMFS
     
     def config_from_order(self, elim_order):
         all_constraints = self.gather_constraints()
         all_functionsets = {idval: c for idval, c in all_constraints if isinstance(c, EqualsTo)}
-        mfsets = [MFunctionalSetLeaf(*(all_functionsets[idval] for idval in sorted(group)), idvals=sorted(group)) for group in elim_order] #sorted to ensure order is preserved
-        MFS = MFunctionalSet(*mfsets, constraints=self.constraints, objective=self.obj)
+        mfsets = [ConstraintSet(*(all_functionsets[idval] for idval in sorted(group)), idvals=sorted(group)) for group in elim_order] #sorted to ensure order is preserved
+        MFS = FunctionalSet(*mfsets, constraints=self.constraints, objective=self.obj)
         MFS.elim = mfsets
         return MFS
     
     def config_from_workflow(self, workflow_order):
-        MFS_root = MFunctionalSet()
+        MFS_root = FunctionalSet()
         new_mfs = None
         all_constraints = self.gather_constraints()
         all_functionsets = {idval: c for idval, c in all_constraints if isinstance(c, EqualsTo)}
@@ -266,7 +271,7 @@ class MFunctionalSet():
             if elt[0] == SOLVER:
                 if new_mfs is not None:
                     new_mfs.elim = [new_mfs] # HACK for build_opt to work
-                new_mfs = MFunctionalSetLeaf()
+                new_mfs = ConstraintSet()
                 MFS_root.functionalsubsetof(new_mfs)
             else:
                 constraint_idx = elt[1]
@@ -280,7 +285,7 @@ class MFunctionalSet():
         return MFS_root # FIX: this should be the root solver 
             
 
-class MFunctionalSetLeaf(MFunctionalSet):
+class ConstraintSet(FunctionalSet):
     def __init__(self, *supersets, autoid=True, idvals=None):
         supersets = supersets if supersets is not None else []
         supersets = ([(generate_short_id(), c) for c in supersets] if not idvals else [(idval,c) for idval, c in zip(idvals, supersets)]) if autoid else supersets

@@ -122,6 +122,7 @@ sin = wrap_sympy_function(sp.sin)
 exp = wrap_sympy_function(sp.exp)
 log = wrap_sympy_function(sp.log)
 sqrt = wrap_sympy_function(sp.sqrt)
+sp_abs = wrap_sympy_function(sp.Abs)
 
 def symbolic(*args):
     return [SymbolicExpression(arg) for arg in args]
